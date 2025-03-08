@@ -92,10 +92,11 @@ class Package:
                 self._handle_package()
             finally:
                 if not config.keep_intermediates_on_failure:
-                    logger.info("Cleaning up working directories")
-                    shutil.rmtree(self._get_package_workdir_base_path())
+                    self._cleanup_working_directories()
                 else:
-                    logger.info("Build failed but --keep was specified. Keeping build intermediates.")
+                    logger.info(
+                        "Build failed but --keep was specified. Keeping build intermediates."
+                    )
 
     def _get_package_workdir_base_path(self) -> str:
         return os.path.join(
@@ -360,3 +361,17 @@ class Package:
             hash_object.update(str(self.options[key]).encode("utf-8"))
 
         return hash_object.hexdigest()
+
+    def _cleanup_working_directories(self):
+        """
+        Cleanup the working directories for the package
+        """
+
+        logger.info("Cleaning up working directories")
+
+        shutil.rmtree(self._get_package_workdir_base_path())
+
+        parent_dir = os.path.join(config.get_workspace_base_path(), self.description.atom.name)
+
+        if not os.listdir(parent_dir):
+            shutil.rmtree(parent_dir)
