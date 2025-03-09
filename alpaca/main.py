@@ -113,6 +113,23 @@ def _handle_install(package_atom: str):
     package.build()
 
 
+def _handle_prune(prune_all: bool):
+    config = Configuration()
+
+    if not config.user_is_root:
+        raise PermissionError("You must be root to prune build intermediates")
+
+    logger.info("Pruning build intermediates...")
+
+    shutil.rmtree(config.get_workspace_base_path())
+
+    if prune_all:
+        logger.info("Pruning local binary cache...")
+        shutil.rmtree(config.get_package_local_binary_cache_base_path())
+
+    logger.info("Pruning complete")
+
+
 def main():
     try:
         parser = _create_arg_parser()
@@ -174,15 +191,7 @@ def main():
         elif args.command == "remove":
             pass
         elif args.command == "prune":
-            logger.info("Pruning build intermediates...")
-
-            shutil.rmtree(config.get_workspace_base_path())
-
-            if args.all:
-                logger.info("Pruning local binary cache...")
-                shutil.rmtree(config.get_package_local_binary_cache_base_path())
-
-            logger.info("Pruning complete")
+            _handle_prune(args.all)
         else:
             parser.print_help()
     except Exception as e:
