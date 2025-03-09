@@ -122,13 +122,9 @@ def _handle_install(package_atom: str):
 
 
 def _handle_prune(prune_all: bool):
-    config = Configuration()
-
-    if not config.user_is_root:
-        raise PermissionError("You must be root to prune build intermediates")
-
     logger.info("Pruning build intermediates...")
 
+    config = Configuration()
     shutil.rmtree(config.get_workspace_base_path())
 
     if prune_all:
