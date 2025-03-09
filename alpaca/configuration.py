@@ -34,12 +34,6 @@ class Configuration:
             "environment", "target_architecture", fallback="x86_64"
         )
 
-        self._parse_repositories(config)
-
-        self.package_streams = config.get(
-            "repository", "package_streams", fallback="core"
-        ).split(",")
-
         self.c_flags = config.get("build", "c_flags", fallback="")
         self.cpp_flags = config.get("build", "cpp_flags", fallback="")
         self.ld_flags = config.get("build", "ld_flags", fallback="")
@@ -53,6 +47,12 @@ class Configuration:
         self.user_is_root = os.getuid() == 0
 
         self.data_directory = "/var/lib/alpaca"
+
+        self._parse_repositories(config)
+
+        self.package_streams = config.get(
+            "repository", "package_streams", fallback="core"
+        ).split(",")
 
     def get_repository_base_path(self) -> str:
         return os.path.join(self.data_directory, "repositories")
