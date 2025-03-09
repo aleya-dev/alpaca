@@ -106,7 +106,6 @@ class Package:
                 raise ValueError("Failed to build package")
 
         try:
-            self._handle_pre_install()
             self._install_to_system()
             self._handle_post_install()
         except Exception:
@@ -274,31 +273,6 @@ class Package:
 
         compress_tar(self._get_package_package_directory(), output_archive_file)
         write_file_hash(output_archive_file)
-
-    def _handle_pre_install(self):
-        """
-        This function will call the handle_pre_install function in the package script, if it exists.
-        If the function does not exist, this will do nothing.
-        """
-
-        config = Configuration()
-
-        if config.custom_install_target:
-            logger.warning(
-                "Custom install target is set. Skipping pre-install script."
-            )
-            return
-
-        if not Configuration().is_aleya_linux_host:
-            logger.warning(
-                "Not running on an Aleya Linux host. Skipping pre-install script."
-            )
-            return
-
-        logger.info("Running pre-install script...")
-        self._call_script_function(
-            "handle_pre_install", self._get_package_package_directory()
-        )
 
     def _install_to_system(self):
         """
