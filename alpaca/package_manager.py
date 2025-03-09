@@ -21,8 +21,9 @@ class PackageManager:
             logger.verbose(f"Package {atom} loaded from cache")
             return self.packages[atom]
 
-        config = Configuration()
+        logger.verbose(f"Searching for package {atom} in repositories...")
 
+        config = Configuration()
         for repo in config.repositories:
             logger.verbose(f"Searching for package {atom} in {repo.get_name()}")
 
@@ -96,6 +97,8 @@ class PackageManager:
         config = Configuration()
 
         for repo in config.repositories:
+            logger.verbose(f"Searching for package {package_name} in {repo.get_name()}")
+
             for stream in config.package_streams:
                 latest_info_path = os.path.join(
                     repo.get_path(), stream, package_name, _LATEST_VERSION_IDENTIFIER
