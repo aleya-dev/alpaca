@@ -97,7 +97,6 @@ class Package:
                 self._handle_build()
                 self._handle_check()
                 self._handle_package()
-                self._generate_package_metadata()
                 self._compress_package()
             except Exception:
                 if not config.keep_intermediates_on_failure:
@@ -106,6 +105,7 @@ class Package:
                 raise ValueError("Failed to build package")
 
         try:
+            self._generate_package_metadata()
             self._install_to_system()
             self._handle_post_install()
         except Exception:
@@ -232,13 +232,12 @@ class Package:
     def _generate_package_metadata(self):
         """
         Generate metadata for the package. This will include the package name, version and release.
+        This way the package can be identified and managed by the package manager, even when the
+        repository is not available.
         """
 
         package_metadata_directory = os.path.join(
-            self._get_package_package_directory(),
-            "var",
-            "lib",
-            "alpaca",
+            Configuration().install_target,
             "packages",
             f"{self.description.atom.name}",
         )
