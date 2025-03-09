@@ -1,4 +1,4 @@
-from alpaca.logging import logger, enable_debug_logging, enable_verbose_logging
+from alpaca.logging import logger, enable_verbose_logging
 from alpaca.package_manager import PackageManager
 from alpaca.configuration import Configuration
 
@@ -19,9 +19,6 @@ def _create_arg_parser():
         "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     parser.add_argument(
-        "--debug", "-d", action="store_true", help="Enable debug output"
-    )
-    parser.add_argument(
         "--quiet",
         "-q",
         action="store_true",
@@ -34,7 +31,6 @@ def _create_arg_parser():
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Subcommand help")
-    subparsers.add_parser("update", help="Update package lists")
 
     install_parser = subparsers.add_parser("install", help="Install a package")
     install_parser.add_argument(
@@ -87,6 +83,8 @@ def _create_arg_parser():
         action="store_true",
         help="Run the post-install script for all installed packages; does not perform an update.",
     )
+
+    subparsers.add_parser("dumpconfig", help="Print the current configuration")
 
     return parser
 
@@ -161,23 +159,14 @@ def main():
         # This code is a little wonky, we can't use "config." yet until we've parsed the command line arguments fully,
         # and configured the log levels; otherwise half the log messages will be suppressed because the logger isn't
         # configured yet.
-        if args.debug:
-            enable_debug_logging()
-
         if args.verbose:
             enable_verbose_logging()
 
         config = Configuration()
+        config.verbose_logging = args.verbose
 
-        if args.verbose or config.verbose:
+        if config.verbose_logging:
             enable_verbose_logging()
-            config.verbose = True
-            logger.verbose("Verbose output enabled")
-
-        if args.debug or config.debug:
-            enable_debug_logging()
-            config.debug = True
-            logger.debug("Debug output enabled")
 
         if args.quiet:
             config.suppress_build_output = True
@@ -191,13 +180,13 @@ def main():
             "For more information, visit https://www.gnu.org/licenses/gpl-3.0.html"
         )
 
-        if not config.is_aleya_linux_host:
+        if not config.is_aleya_linux_host and args.command != "dumpconfig":
             logger.warning(
                 "Not running on an Aleya Linux host. Physically installing packages will be skipped."
             )
 
-        if not config.user_is_root:
-            raise PermissionError("You must be root to update package lists")
+        if not config.user_is_root and args.command != "dumpconfig":
+            raise PermissionError(f"You must be root use the {args.command} command.")
 
         _create_workspace_directories()
 
@@ -225,6 +214,8 @@ def main():
             _handle_prune(args.all)
         elif args.command == "update":
             _handle_update(args.post)
+        elif args.command == "dumpconfig":
+            config.dump_config()
         else:
             parser.print_help()
     except Exception as e:

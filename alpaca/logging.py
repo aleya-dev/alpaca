@@ -30,10 +30,7 @@ def _log_verbose(self, message, *args, **kwargs):
 
 def enable_verbose_logging():
     logger.setLevel(VERBOSE)
-
-
-def enable_debug_logging():
-    logger.setLevel(logging.DEBUG)
+    logger.verbose("Verbose output enabled")
 
 
 def setup_logger() -> logging.Logger:

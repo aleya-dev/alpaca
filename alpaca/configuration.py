@@ -1,6 +1,6 @@
 from alpaca.utils import get_full_path, singleton
 from alpaca.logging import logger
-from alpaca.repository import Repository
+from alpaca.repository import Repository, RepositoryType
 import os
 import configparser
 
@@ -19,8 +19,7 @@ class Configuration:
         if config_file_path is not None:
             config.read(config_file_path, encoding="utf-8")
 
-        self.debug = config.getboolean("general", "debug", fallback="false")
-        self.verbose = config.getboolean("general", "verbose", fallback="false")
+        self.verbose_logging = False
 
         self.suppress_build_output = config.getboolean(
             "general", "suppress_build_output", fallback="false"
@@ -34,8 +33,8 @@ class Configuration:
             "environment", "target_architecture", fallback="x86_64"
         )
 
-        self.c_flags = config.get("build", "c_flags", fallback="")
-        self.cpp_flags = config.get("build", "cpp_flags", fallback="")
+        self.c_flags = config.get("build", "c_flags", fallback="-O2")
+        self.cpp_flags = config.get("build", "cpp_flags", fallback="-O2")
         self.ld_flags = config.get("build", "ld_flags", fallback="")
         self.make_flags = config.get("build", "make_flags", fallback="")
         self.ninja_flags = config.get("build", "ninja_flags", fallback="")
@@ -50,11 +49,11 @@ class Configuration:
         self.custom_install_target = False
         self.data_directory = "/var/lib/alpaca"
 
+        self.repositories: list[Repository] = []
         self._parse_repositories(config)
 
-        self.package_streams = config.get(
-            "repository", "package_streams", fallback="core"
-        ).split(",")
+        self.package_streams: list[str] = []
+        self._parse_package_streams(config)
 
     def get_repository_base_path(self) -> str:
         return os.path.join(self.data_directory, "repositories")
@@ -65,15 +64,68 @@ class Configuration:
     def get_package_local_binary_cache_base_path(self) -> str:
         return os.path.join(self.data_directory, "bincache", "local")
 
-    def _parse_repositories(self, config: configparser.ConfigParser):
-        repo_list = config.get("repository", "repositories", fallback="").split(",")
+    def dump_config(self):
+        print(
+            f"""[general]
+suppress_build_output={self.suppress_build_output}
+show_download_progress={self.show_download_progress}
 
-        self.repositories: list[Repository] = []
+[environment]
+target_architecture={self.target_architecture}
+
+[repository]
+repositories={self._get_repositories_config_entry()}
+package_streams={self._get_package_stream_config_entry()}
+
+[build]
+c_flags={self.c_flags}
+cpp_flags={self.cpp_flags}
+ld_flags={self.ld_flags}
+make_flags={self.make_flags}
+ninja_flags={self.ninja_flags}
+"""
+        )
+
+    def _get_repositories_config_entry(self):
+        str = ""
+
+        for repo in self.repositories:
+            if repo.get_type() == RepositoryType.GIT:
+                str += f"git+{repo.get_defined_path()},"
+            elif repo.get_type() == RepositoryType.LOCAL:
+                str += f"local+{repo.get_defined_path()},"
+
+        if len(str) > 0:
+            str = str[:-1]
+
+        return str
+
+    def _parse_repositories(self, config: configparser.ConfigParser):
+        repo_list_str = config.get("repository", "repositories", fallback="")
+
+        if repo_list_str == "":
+            self.repositories.append(
+                Repository(
+                    "git+https://github.com/aleya-dev/aleya-packages.git",
+                    self.get_repository_base_path(),
+                )
+            )
+            return
+
+        repo_list = repo_list_str.split(",")
 
         logger.verbose(f"Parsing repositories: {repo_list}")
 
         for repo in repo_list:
             self.repositories.append(Repository(repo, self.get_repository_base_path()))
+
+    def _get_package_stream_config_entry(self):
+        return ",".join(self.package_streams)
+
+    def _parse_package_streams(self, config: configparser.ConfigParser):
+        self.package_streams = config.get(
+            "repository", "package_streams", fallback="core"
+        ).split(",")
 
     @staticmethod
     def _get_config_file_path() -> str:
@@ -109,10 +161,6 @@ class Configuration:
         if os.path.exists(local_config_path):
             logger.debug(f"Using local config file found at {local_config_path}")
             return local_config_path
-
-        logger.warning("No configuration file found. Using default configuration.")
-
-        raise FileNotFoundError("No configuration file found")
 
     @staticmethod
     def _check_aleya_linux_host() -> bool:

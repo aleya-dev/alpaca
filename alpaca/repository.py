@@ -52,6 +52,15 @@ class Repository:
         """
         return self._entry
 
+    def get_defined_path(self) -> str:
+        """
+        Get the path to the repository as defined in the repository entry
+
+        Returns:
+            str: The path to the repository as defined in the repository entry
+        """
+        return self._path
+
     def get_path(self) -> str:
         """
         Get the path to the repository on the local filesystem
@@ -71,6 +80,12 @@ class Repository:
             raise ValueError(
                 f"Invalid or unsupported repository type: {self._repo_type}"
             )
+
+    def get_type(self) -> RepositoryType:
+        """
+        Get the type of the repository
+        """
+        return self._repo_type
 
     def _update_git(self):
         """
