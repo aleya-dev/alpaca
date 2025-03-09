@@ -100,6 +100,18 @@ class Package:
 
                 raise ValueError("Failed to build package")
 
+        try:
+            self._handle_pre_install()
+            self._install_to_system()
+            self._handle_post_install()
+        except Exception:
+            if not config.keep_intermediates_on_failure:
+                self._cleanup_working_directories()
+
+            raise ValueError("Failed to install package")
+        finally:
+            self._cleanup_working_directories()
+
     def _get_package_workdir_base_path(self) -> str:
         return os.path.join(
             Configuration().get_workspace_base_path(),
@@ -213,6 +225,43 @@ class Package:
             print_output=not Configuration().suppress_build_output,
         )
 
+    def _generate_package_metadata(self):
+        """
+        Generate metadata for the package. This will include the package name, version and release.
+        """
+
+        package_metadata_directory = os.path.join(
+            self._get_package_package_directory(),
+            "var",
+            "lib",
+            "alpaca",
+            "packages",
+            f"{self.description.atom.name}",
+        )
+
+        os.makedirs(package_metadata_directory, exist_ok=True)
+
+        package_files = []
+        for root, _, files in os.walk(self._get_package_package_directory()):
+            for file in files:
+                package_files.append(
+                    os.path.relpath(
+                        os.path.join(root, file), self._get_package_package_directory()
+                    )
+                )
+
+        # Write the list to a text file
+        with open(os.path.join(package_metadata_directory, "files"), "w") as file:
+            for package_file in package_files:
+                file.write(f"/{package_file}\n")
+
+        shutil.copy(self.description.recipe_path, package_metadata_directory)
+
+    def _compress_package(self):
+        """
+        Compress the package directory into a tar.xz archive and store it in the local binary cache.
+        """
+
         output_archive_file = os.path.join(
             self.get_package_local_binary_cache_base_path(),
             f"{self._compute_binary_hash()}.tar.xz",
@@ -220,6 +269,56 @@ class Package:
 
         compress_tar(self._get_package_package_directory(), output_archive_file)
         write_file_hash(output_archive_file)
+
+    def _handle_pre_install(self):
+        """
+        This function will call the handle_pre_install function in the package script, if it exists.
+        If the function does not exist, this will do nothing.
+        """
+
+        if not Configuration().is_aleya_linux_host:
+            logger.warning(
+                "Not running on an Aleya Linux host. Skipping pre-install script."
+            )
+            return
+
+        logger.info("Running pre-install script...")
+        self._call_script_function(
+            "handle_pre_install", self._get_package_package_directory()
+        )
+
+    def _install_to_system(self):
+        if not Configuration().is_aleya_linux_host:
+            logger.warning(
+                "Not running on an Aleya Linux host. Physically installing packages will be skipped."
+            )
+            return
+
+        logger.info("Installing package to system...")
+
+        shutil.copytree(
+            self._get_package_package_directory(),
+            "/",
+            dirs_exist_ok=True,
+            symlinks=True,
+        )
+
+    def _handle_post_install(self):
+        """
+        This function will call the handle_post_install function in the package script, if it exists.
+        If the function does not exist, this will do nothing.
+        """
+
+        if not Configuration().is_aleya_linux_host:
+            logger.warning(
+                "Not running on an Aleya Linux host. Skipping post-install script."
+            )
+            return
+
+        logger.info("Running post-install script...")
+        self._call_script_function(
+            "handle_post_install", self._get_package_package_directory()
+        )
 
     def _download_source_file(self, source: str, sha256sum: str) -> str:
         """
