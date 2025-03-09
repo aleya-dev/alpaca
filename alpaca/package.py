@@ -281,9 +281,9 @@ class Package:
 
         config = Configuration()
 
-        if not config.is_aleya_linux_host:
+        if not config.is_aleya_linux_host and config.install_target == "/":
             logger.warning(
-                "Not running on an Aleya Linux host. Physically installing packages will be skipped."
+                "Not running on an Aleya Linux host. Physically installing packages to '/' will be skipped."
             )
             return
 

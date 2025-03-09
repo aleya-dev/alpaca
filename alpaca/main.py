@@ -182,9 +182,9 @@ def main():
             "For more information, visit https://www.gnu.org/licenses/gpl-3.0.html"
         )
 
-        if not config.is_aleya_linux_host and args.command != "dumpconfig":
+        if not config.is_aleya_linux_host and args.command != "dumpconfig" and config.install_target != "/":
             logger.warning(
-                "Not running on an Aleya Linux host. Physically installing packages will be skipped."
+                "Not running on an Aleya Linux host. Physically installing packages to '/' will be skipped."
             )
 
         if not config.user_is_root and args.command != "dumpconfig":
