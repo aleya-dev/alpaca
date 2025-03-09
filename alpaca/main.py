@@ -56,6 +56,14 @@ def _create_arg_parser():
         help="Keep the build directory if the build fails",
     )
 
+    install_parser.add_argument(
+        "--target",
+        "-t",
+        type=str,
+        help="Install the package to a specific directory (e.g. /mnt). Due to how root prefixes work, "
+        "this will only work for prebuilt packages",
+    )
+
     remove_parser = subparsers.add_parser("remove", help="Remove a package")
     remove_parser.add_argument(
         "package",
@@ -186,6 +194,14 @@ def main():
 
             if args.keep:
                 config.keep_intermediates_on_failure = True
+
+            if args.target:
+                logger.info(f"Using installation target: {args.target}")
+
+                if args.target != "/":
+                    config.custom_install_target = True
+
+                config.install_target = args.target
 
             _handle_install(args.package)
         elif args.command == "remove":

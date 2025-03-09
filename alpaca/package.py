@@ -86,6 +86,11 @@ class Package:
         if not require_build:
             extract_tar(artifact_file_path, self._get_package_package_directory())
         else:
+            if config.custom_install_target:
+                raise ValueError(
+                    "Binary cache for this install is required, but a binary cache was not found for this package."
+                )
+
             try:
                 self._create_working_directories()
                 self._handle_sources()
@@ -276,6 +281,14 @@ class Package:
         If the function does not exist, this will do nothing.
         """
 
+        config = Configuration()
+
+        if config.custom_install_target:
+            logger.warning(
+                "Custom install target is set. Skipping pre-install script."
+            )
+            return
+
         if not Configuration().is_aleya_linux_host:
             logger.warning(
                 "Not running on an Aleya Linux host. Skipping pre-install script."
@@ -288,7 +301,14 @@ class Package:
         )
 
     def _install_to_system(self):
-        if not Configuration().is_aleya_linux_host:
+        """
+        Install the package to the system. This will copy the package directory to the install target.
+        By default this is the system root directory ('/'), but this can be changed on the commandline.
+        """
+
+        config = Configuration()
+
+        if not config.is_aleya_linux_host:
             logger.warning(
                 "Not running on an Aleya Linux host. Physically installing packages will be skipped."
             )
@@ -298,7 +318,7 @@ class Package:
 
         shutil.copytree(
             self._get_package_package_directory(),
-            "/",
+            config.install_target,
             dirs_exist_ok=True,
             symlinks=True,
         )
@@ -308,6 +328,14 @@ class Package:
         This function will call the handle_post_install function in the package script, if it exists.
         If the function does not exist, this will do nothing.
         """
+
+        config = Configuration()
+
+        if config.custom_install_target:
+            logger.warning(
+                "Custom install target is set. Skipping post-install script."
+            )
+            return
 
         if not Configuration().is_aleya_linux_host:
             logger.warning(

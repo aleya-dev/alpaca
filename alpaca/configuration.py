@@ -46,6 +46,8 @@ class Configuration:
         self.is_aleya_linux_host = self._check_aleya_linux_host()
         self.user_is_root = os.getuid() == 0
 
+        self.install_target = "/"
+        self.custom_install_target = False
         self.data_directory = "/var/lib/alpaca"
 
         self._parse_repositories(config)
