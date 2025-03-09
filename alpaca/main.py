@@ -32,6 +32,8 @@ def _create_arg_parser():
 
     subparsers = parser.add_subparsers(dest="command", help="Subcommand help")
 
+    update_parser = subparsers.add_parser("update", help="Upgrade packages")
+
     install_parser = subparsers.add_parser("install", help="Install a package")
     install_parser.add_argument(
         "package",
@@ -76,12 +78,12 @@ def _create_arg_parser():
         "--all", "-a", action="store_true", help="Also clean up the local binary cache"
     )
 
-    update_parser = subparsers.add_parser("update", help="Update packages")
+    update_parser = subparsers.add_parser("upgrade", help="Upgrade packages")
     update_parser.add_argument(
         "--post",
         "-p",
         action="store_true",
-        help="Run the post-install script for all installed packages; does not perform an update.",
+        help="Run the post-install script for all installed packages; does not perform an upgrade.",
     )
 
     subparsers.add_parser("dumpconfig", help="Print the current configuration")
@@ -140,7 +142,7 @@ def _handle_prune(prune_all: bool):
     logger.info("Pruning complete")
 
 
-def _handle_update(post_install: bool):
+def _handle_upgrade(post_install: bool):
     config = Configuration()
 
     if not config.is_aleya_linux_host:
@@ -212,8 +214,8 @@ def main():
             pass
         elif args.command == "prune":
             _handle_prune(args.all)
-        elif args.command == "update":
-            _handle_update(args.post)
+        elif args.command == "upgrade":
+            _handle_upgrade(args.post)
         elif args.command == "dumpconfig":
             config.dump_config()
         else:

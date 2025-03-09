@@ -34,6 +34,12 @@ build output, while verbose acts on the logging of alpaca itself.
 
     alpaca --quiet install binutils
 
+### Updating repositories
+
+To update your local repository cache to see if there are new versions or new packages available, you can use
+
+    alpaca update
+
 ### Package installation
 
 Packages can be installed using the install command. If no version was specified, the latest version of the package will be installed:
@@ -69,7 +75,7 @@ installation to a disk. You can use the --target PATH flag to achieve this.
 Note that due to technical limitations, the post-build hooks will not be ran for these packages. You must do so manually after
 entering the newly installed system in a chroot, by using the following command:
 
-    alpaca update --post
+    alpaca upgrade --post
 
 ### Cache cleanup
 
