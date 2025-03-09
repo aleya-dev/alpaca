@@ -203,10 +203,6 @@ def main():
 
             if args.target:
                 logger.info(f"Using installation target: {args.target}")
-
-                if args.target != "/":
-                    config.custom_install_target = True
-
                 config.install_target = args.target
 
             _handle_install(args.package)

@@ -46,7 +46,6 @@ class Configuration:
         self.user_is_root = os.getuid() == 0
 
         self.install_target = "/"
-        self.custom_install_target = False
         self.data_directory = "/var/lib/alpaca"
 
         self.repositories: list[Repository] = []

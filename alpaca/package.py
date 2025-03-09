@@ -86,7 +86,7 @@ class Package:
         if not require_build:
             extract_tar(artifact_file_path, self._get_package_package_directory())
         else:
-            if config.custom_install_target:
+            if config.install_target != "/":
                 raise ValueError(
                     "Binary cache for this install is required, but a binary cache was not found for this package."
                 )
@@ -305,7 +305,7 @@ class Package:
 
         config = Configuration()
 
-        if config.custom_install_target:
+        if config.install_target != "/":
             logger.warning(
                 "Custom install target is set. Skipping post-install script."
             )
