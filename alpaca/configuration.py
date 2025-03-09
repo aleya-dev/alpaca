@@ -1,15 +1,16 @@
-from alpaca.utils import get_full_path
+from alpaca.utils import get_full_path, singleton
 from alpaca.logging import logger
 from alpaca.repository import Repository
 import os
 import configparser
 
 
+@singleton
 class Configuration:
     def __init__(self):
         logger.debug("Initializing configuration")
 
-        config_file_path = Configuration._get_config_file_path()
+        config_file_path = self._get_config_file_path()
 
         # Todo: This should look in various locations for the configuration file
         # and should also be able to be overridden by environment variables and command line arguments
@@ -33,10 +34,6 @@ class Configuration:
             "environment", "target_architecture", fallback="x86_64"
         )
 
-        self.workspace_path = get_full_path(
-            config.get("environment", "workspace_path", fallback="~/alpaca_workspace")
-        )
-
         self._parse_repositories(config)
 
         self.package_streams = config.get(
@@ -52,14 +49,19 @@ class Configuration:
         self.force_build_from_source = False
         self.keep_intermediates_on_failure = False
 
+        self.is_aleya_linux_host = self._check_aleya_linux_host()
+        self.user_is_root = os.getuid() == 0
+
+        self.data_directory = "/var/lib/alpaca"
+
     def get_repository_base_path(self) -> str:
-        return os.path.join(self.workspace_path, "repositories")
+        return os.path.join(self.data_directory, "repositories")
 
     def get_workspace_base_path(self) -> str:
-        return os.path.join(self.workspace_path, "workspace")
+        return os.path.join(self.data_directory, "workspace")
 
     def get_package_local_binary_cache_base_path(self) -> str:
-        return os.path.join(self.workspace_path, "bincache", "local")
+        return os.path.join(self.data_directory, "bincache", "local")
 
     def _parse_repositories(self, config: configparser.ConfigParser):
         repo_list = config.get("repository", "repositories", fallback="").split(",")
@@ -110,5 +112,18 @@ class Configuration:
 
         raise FileNotFoundError("No configuration file found")
 
+    @staticmethod
+    def _check_aleya_linux_host() -> bool:
+        """
+        Check if the host system is Aleya Linux by using a very simple check on the /etc/os-release file
+        This helps reduce the risk of accidental installation on non-Aleya Linux systems; likely breaking them.
 
-config = Configuration()
+        Returns:
+            bool: True if the host system is Aleya Linux, False otherwise
+        """
+        with open("/etc/os-release") as f:
+            for line in f:
+                if line.startswith("ID="):
+                    return line.strip() == "ID=aleya"
+
+        return False

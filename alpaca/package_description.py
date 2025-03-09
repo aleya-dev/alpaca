@@ -1,5 +1,5 @@
 from alpaca.shell_command import ShellCommand
-from alpaca.configuration import config
+from alpaca.configuration import Configuration
 from alpaca.logging import logger
 from pathlib import Path
 
@@ -112,6 +112,7 @@ class PackageDescription:
             dict[str, str]: A dictionary of environment variables to be passed to the package script
         """
 
+        config = Configuration()
         env = {}
 
         # This is a reduced set of variables available in Package, since

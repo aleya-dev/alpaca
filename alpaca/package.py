@@ -1,5 +1,5 @@
 from alpaca.logging import logger
-from alpaca.configuration import config
+from alpaca.configuration import Configuration
 from alpaca.shell_command import ShellCommand
 from alpaca.package_description import PackageDescription, Atom
 from alpaca.utils import (
@@ -60,6 +60,8 @@ class Package:
 
         logger.info(f"Building package {self.description.atom}...")
 
+        config = Configuration()
+
         self._create_working_directories()
 
         if config.force_build_from_source:
@@ -90,17 +92,17 @@ class Package:
                 self._handle_build()
                 self._handle_check()
                 self._handle_package()
-            finally:
+                self._generate_package_metadata()
+                self._compress_package()
+            except Exception:
                 if not config.keep_intermediates_on_failure:
                     self._cleanup_working_directories()
-                else:
-                    logger.info(
-                        "Build failed but --keep was specified. Keeping build intermediates."
-                    )
+
+                raise ValueError("Failed to build package")
 
     def _get_package_workdir_base_path(self) -> str:
         return os.path.join(
-            config.get_workspace_base_path(),
+            Configuration().get_workspace_base_path(),
             self.description.atom.name,
             f"{self.description.atom.version}-{self.description.atom.release}",
         )
@@ -116,7 +118,7 @@ class Package:
 
     def get_package_local_binary_cache_base_path(self) -> str:
         return os.path.join(
-            config.get_package_local_binary_cache_base_path(),
+            Configuration().get_package_local_binary_cache_base_path(),
             self.description.atom.name,
             f"{self.description.atom.version}-{self.description.atom.release}",
         )
@@ -178,7 +180,7 @@ class Package:
         self._call_script_function(
             "handle_build",
             self._get_package_build_directory(),
-            print_output=not config.suppress_build_output,
+            print_output=not Configuration().suppress_build_output,
         )
 
     def _handle_check(self):
@@ -195,7 +197,7 @@ class Package:
         self._call_script_function(
             "handle_check",
             self._get_package_build_directory(),
-            print_output=not config.suppress_build_output,
+            print_output=not Configuration().suppress_build_output,
         )
 
     def _handle_package(self):
@@ -208,7 +210,7 @@ class Package:
         self._call_script_function(
             "handle_package",
             self._get_package_build_directory(),
-            print_output=not config.suppress_build_output,
+            print_output=not Configuration().suppress_build_output,
         )
 
         output_archive_file = os.path.join(
@@ -217,7 +219,6 @@ class Package:
         )
 
         compress_tar(self._get_package_package_directory(), output_archive_file)
-
         write_file_hash(output_archive_file)
 
     def _download_source_file(self, source: str, sha256sum: str) -> str:
@@ -238,6 +239,8 @@ class Package:
         source_path = self._get_package_source_directory()
 
         logger.info(f"Downloading source {source} to {source_path}")
+
+        config = Configuration()
 
         # If the source is a URL
         if is_url(source):
@@ -317,6 +320,7 @@ class Package:
             dict[str, str]: A dictionary of environment variables to be passed to the package script
         """
 
+        config = Configuration()
         env = {}
 
         for key in self.options.keys():
@@ -354,7 +358,7 @@ class Package:
 
         hash_object = hashlib.sha256()
         hash_object.update(package_script.encode("utf-8"))
-        hash_object.update(config.target_architecture.encode("utf-8"))
+        hash_object.update(Configuration().target_architecture.encode("utf-8"))
 
         for key in sorted(self.options.keys()):
             hash_object.update(key.encode("utf-8"))
@@ -371,7 +375,9 @@ class Package:
 
         shutil.rmtree(self._get_package_workdir_base_path())
 
-        parent_dir = os.path.join(config.get_workspace_base_path(), self.description.atom.name)
+        parent_dir = os.path.join(
+            Configuration().get_workspace_base_path(), self.description.atom.name
+        )
 
         if not os.listdir(parent_dir):
             shutil.rmtree(parent_dir)

@@ -1,6 +1,6 @@
-from alpaca.configuration import config
 from alpaca.logging import logger, enable_debug_logging, enable_verbose_logging
 from alpaca.package_manager import PackageManager
+from alpaca.configuration import Configuration
 
 import argparse
 import os
@@ -76,8 +76,10 @@ def _create_arg_parser():
 
 
 def _create_workspace_directories():
-    logger.verbose(f"Ensuring workspace directories at {config.workspace_path} exist")
-    os.makedirs(config.workspace_path, exist_ok=True)
+    config = Configuration()
+
+    logger.verbose(f"Ensuring workspace directories at {config.data_directory} exist")
+    os.makedirs(config.data_directory, exist_ok=True)
 
     # The repositories directory is used to store the local cache of repositories
     os.makedirs(config.get_repository_base_path(), exist_ok=True)
@@ -92,8 +94,10 @@ def _create_workspace_directories():
 
 
 def _handle_update():
+    config = Configuration()
+
     logger.verbose("Ensuring repo cache path exists")
-    os.makedirs(config.workspace_path, exist_ok=True)
+    os.makedirs(config.data_directory, exist_ok=True)
 
     logger.info("Updating package lists...")
 
@@ -114,6 +118,30 @@ def main():
         parser = _create_arg_parser()
         args = parser.parse_args()
 
+        # This code is a little wonky, we can't use "config." yet until we've parsed the command line arguments fully,
+        # and configured the log levels; otherwise half the log messages will be suppressed because the logger isn't
+        # configured yet.
+        if args.debug:
+            enable_debug_logging()
+
+        if args.verbose:
+            enable_verbose_logging()
+
+        config = Configuration()
+
+        if args.verbose or config.verbose:
+            enable_verbose_logging()
+            config.verbose = True
+            logger.verbose("Verbose output enabled")
+
+        if args.debug or config.debug:
+            enable_debug_logging()
+            config.debug = True
+            logger.debug("Debug output enabled")
+
+        if args.quiet:
+            config.suppress_build_output = True
+
         logger.debug("This software is provided under GNU GPL v3.0")
         logger.debug("This software comes with ABSOLUTELY NO WARRANTY")
         logger.debug(
@@ -123,21 +151,13 @@ def main():
             "For more information, visit https://www.gnu.org/licenses/gpl-3.0.html"
         )
 
-        if args.debug:
-            config.debug = True
+        if not config.is_aleya_linux_host:
+            logger.warning(
+                "Not running on an Aleya Linux host. Physically installing packages will be skipped."
+            )
 
-        if config.debug:
-            enable_debug_logging()
-
-        if args.verbose:
-            config.verbose = True
-
-        if config.verbose:
-            enable_verbose_logging()
-            logger.verbose("Verbose output enabled")
-
-        if args.quiet:
-            config.suppress_build_output = True
+        if not config.user_is_root:
+            raise PermissionError("You must be root to update package lists")
 
         _create_workspace_directories()
 

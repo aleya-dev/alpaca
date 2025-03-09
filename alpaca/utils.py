@@ -9,6 +9,18 @@ import os
 import sys
 
 
+def singleton(cls):
+    """Singleton decorator"""
+    instances = {}
+
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+
+    return get_instance
+
+
 def get_full_path(path: str) -> str:
     """
     Get the full absolute path of a file or directory, expanding environment variables and user home directories
@@ -184,7 +196,9 @@ def check_file_hash_from_file(path: str) -> bool:
     sha_file_path = f"{path}.sha256"
 
     if not os.path.exists(sha_file_path):
-        logger.error(f"Hash file {sha_file_path} does not exist. Could not verify sha256 hash.")
+        logger.error(
+            f"Hash file {sha_file_path} does not exist. Could not verify sha256 hash."
+        )
         return False
 
     with open(sha_file_path, "r") as file:

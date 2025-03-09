@@ -6,7 +6,6 @@ show_download_progress=true
 
 [environment]
 target_architecture=x86_64
-workspace_path=~/.cache/alpaca
 
 [repository]
 repositories=git+https://github.com/aleya-dev/aleya-packages.git

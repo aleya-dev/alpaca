@@ -1,6 +1,6 @@
 from alpaca.package import Package
 from alpaca.package_description import Atom
-from alpaca.configuration import config
+from alpaca.configuration import Configuration
 from alpaca.logging import logger
 import os
 
@@ -21,13 +21,19 @@ class PackageManager:
             logger.verbose(f"Package {atom} loaded from cache")
             return self.packages[atom]
 
+        config = Configuration()
+
         for repo in config.repositories:
             logger.verbose(f"Searching for package {atom} in {repo.get_name()}")
 
             for stream in config.package_streams:
                 recipe_base_path = os.path.join(repo.get_path(), stream, atom.name)
-                recipe_path = os.path.join(recipe_base_path, f"{atom.name}-{atom.version}.sh")
-                recipe_path2 = os.path.join(recipe_base_path, f"{atom.name}-{atom.version}-{atom.release}.sh")
+                recipe_path = os.path.join(
+                    recipe_base_path, f"{atom.name}-{atom.version}.sh"
+                )
+                recipe_path2 = os.path.join(
+                    recipe_base_path, f"{atom.name}-{atom.version}-{atom.release}.sh"
+                )
 
                 if os.path.exists(recipe_path):
                     logger.verbose(f"Found package {atom} in repo {repo.get_name()}")
@@ -87,14 +93,20 @@ class PackageManager:
     def _find_latest_package_version(self, package_name: str) -> str:
         logger.info(f"Resolving latest version for package {package_name}")
 
+        config = Configuration()
+
         for repo in config.repositories:
             for stream in config.package_streams:
-                latest_info_path = os.path.join(repo.get_path(), stream, package_name, _LATEST_VERSION_IDENTIFIER)
+                latest_info_path = os.path.join(
+                    repo.get_path(), stream, package_name, _LATEST_VERSION_IDENTIFIER
+                )
 
                 if os.path.exists(latest_info_path):
                     with open(latest_info_path, "r") as f:
                         result = f.read().strip()
-                        logger.info(f"Latest version for package {package_name} is {result}")
+                        logger.info(
+                            f"Latest version for package {package_name} is {result}"
+                        )
                         return result
 
         raise ValueError(f"No package found for {package_name}")
