@@ -80,6 +80,14 @@ def _create_arg_parser():
         "--all", "-a", action="store_true", help="Also clean up the local binary cache"
     )
 
+    update_parser = subparsers.add_parser("update", help="Update packages")
+    update_parser.add_argument(
+        "--post",
+        "-p",
+        action="store_true",
+        help="Run the post-install script for all installed packages; does not perform an update.",
+    )
+
     return parser
 
 
@@ -132,6 +140,17 @@ def _handle_prune(prune_all: bool):
         shutil.rmtree(config.get_package_local_binary_cache_base_path())
 
     logger.info("Pruning complete")
+
+
+def _handle_update(post_install: bool):
+    config = Configuration()
+
+    if not config.is_aleya_linux_host:
+        logger.warning(
+            "Not running on an Aleya Linux host. Update can not run on this system."
+        )
+
+    raise NotImplementedError("Update is not implemented yet")
 
 
 def main():
@@ -204,6 +223,8 @@ def main():
             pass
         elif args.command == "prune":
             _handle_prune(args.all)
+        elif args.command == "update":
+            _handle_update(args.post)
         else:
             parser.print_help()
     except Exception as e:
