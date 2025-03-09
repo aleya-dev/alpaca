@@ -20,6 +20,20 @@ After that you should generate the default configuration file. This can be done 
 
 ## Usage
 
+### Basic flags
+
+To enable verbose output and stack traces you can use the --verbose option in front of any command. For example:
+
+    alpaca --verbose install binutils
+    alpaca --verbose update
+
+Do disable seeing the output of code being built (in case there is no binary cache available for a package), you can use the --quit
+flag. This reduces the console output significantly as it will only output if there was a problem during the build, but it may be
+difficult to see any progress. Note that the --quiet flag can be used in conjunction with --verbose, since quiet only acts on
+build output, while verbose acts on the logging of alpaca itself.
+
+    alpaca --quiet install binutils
+
 ### Package installation
 
 Packages can be installed using the install command. If no version was specified, the latest version of the package will be installed:
