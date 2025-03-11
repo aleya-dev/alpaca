@@ -238,6 +238,9 @@ class Package:
 
         package_metadata_directory = os.path.join(
             Configuration().install_target,
+            "var",
+            "lib",
+            "alpaca",
             "packages",
             f"{self.description.atom.name}",
         )
