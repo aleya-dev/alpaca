@@ -242,8 +242,14 @@ class Package:
         repository is not available.
         """
 
+        config = Configuration()
+
+        if config.is_dry_run:
+            logger.warning("Dry run enabled. Skipping metadata generation.")
+            return
+
         package_metadata_directory = os.path.join(
-            Configuration().install_target,
+            config.install_target,
             "var",
             "lib",
             "alpaca",
@@ -290,6 +296,10 @@ class Package:
 
         config = Configuration()
 
+        if config.is_dry_run:
+            logger.warning("Dry run enabled. Skipping installation.")
+            return
+
         if not config.is_aleya_linux_host and config.install_target == "/":
             logger.warning(
                 "Not running on an Aleya Linux host. Physically installing packages to '/' will be skipped."
@@ -312,6 +322,10 @@ class Package:
         """
 
         config = Configuration()
+
+        if config.is_dry_run:
+            logger.warning("Dry run enabled. Skipping post-install script.")
+            return
 
         if config.install_target != "/":
             logger.warning(

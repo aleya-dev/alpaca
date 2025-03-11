@@ -62,6 +62,13 @@ def _create_arg_parser():
         "this will only work for prebuilt packages",
     )
 
+    install_parser.add_argument(
+        "--dry",
+        "-d",
+        action="store_true",
+        help="Dry run the installation, do not actually install anything",
+    )
+
     remove_parser = subparsers.add_parser("remove", help="Remove a package")
     remove_parser.add_argument(
         "package",
@@ -198,6 +205,9 @@ def main():
 
             if args.keep:
                 config.keep_intermediates_on_failure = True
+
+            if args.dry:
+                config.is_dry_run = True
 
             if args.target:
                 logger.info(f"Using installation target: {args.target}")
