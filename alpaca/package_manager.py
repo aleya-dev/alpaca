@@ -53,7 +53,9 @@ class PackageManager:
                 if in_degree[package] == 0:
                     queue.append(package)
 
-        sorted_order.append(requested_package)
+        # When a package has no dependencies, it is already in this list. Needs investigation
+        if len(sorted_order) != len(self.packages):
+            sorted_order.append(requested_package)
 
         if len(sorted_order) != len(self.packages):
             raise ValueError("Cycle detected in package dependencies")
