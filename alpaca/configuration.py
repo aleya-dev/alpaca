@@ -43,6 +43,7 @@ class Configuration:
         self.keep_intermediates_on_failure = False
 
         self.is_dry_run = False
+        self.skip_check = False
 
         self.is_aleya_linux_host = self._check_aleya_linux_host()
         self.user_is_root = os.getuid() == 0

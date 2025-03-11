@@ -215,11 +215,20 @@ class Package:
         exist, this will do nothing.
         """
 
+        config = Configuration()
+
+        if config.skip_check:
+            logger.warning(
+                "--no-check used. Skipping package check. "
+                "This can lead to unexpected behavior as packages may not be built correctly."
+            )
+            return
+
         logger.info("Checking package...")
         self._call_script_function(
             "handle_check",
             self._get_package_build_directory(),
-            print_output=not Configuration().suppress_build_output,
+            print_output=not config.suppress_build_output,
         )
 
     def _handle_package(self):

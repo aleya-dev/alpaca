@@ -69,6 +69,12 @@ def _create_arg_parser():
         help="Dry run the installation, do not actually install anything",
     )
 
+    install_parser.add_argument(
+        "--no-check",
+        action="store_true",
+        help="Skip the package check phase",
+    )
+
     remove_parser = subparsers.add_parser("remove", help="Remove a package")
     remove_parser.add_argument(
         "package",
@@ -208,6 +214,9 @@ def main():
 
             if args.dry:
                 config.is_dry_run = True
+
+            if args.no_check:
+                config.skip_check = True
 
             if args.target:
                 logger.info(f"Using installation target: {args.target}")
