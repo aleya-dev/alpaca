@@ -99,6 +99,9 @@ class Package:
                 self._handle_package()
                 self._compress_package()
             except Exception:
+                logger.error("Failed to build package...")
+                logger.verbose("Stacktrace: ", exc_info=True)
+
                 if not config.keep_intermediates_on_failure:
                     self._cleanup_working_directories()
 
@@ -109,6 +112,9 @@ class Package:
             self._install_to_system()
             self._handle_post_install()
         except Exception:
+            logger.error("Failed to install package...")
+            logger.verbose("Stacktrace: ", exc_info=True)
+
             if not config.keep_intermediates_on_failure:
                 self._cleanup_working_directories()
 
