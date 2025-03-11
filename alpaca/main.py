@@ -124,9 +124,7 @@ def _handle_update():
 
 
 def _handle_install(package_atom: str):
-    package_manager = PackageManager()
-    package = package_manager.find_package(package_atom)
-    package.build()
+    PackageManager().install_package(package_atom)
 
 
 def _handle_prune(prune_all: bool):
