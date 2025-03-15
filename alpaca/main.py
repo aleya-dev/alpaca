@@ -8,7 +8,7 @@ import shutil
 
 import importlib.metadata
 
-__version__ = importlib.metadata.version("alpaca")
+__version__ = importlib.metadata.version("aleya-alpaca")
 
 
 def _create_arg_parser():
