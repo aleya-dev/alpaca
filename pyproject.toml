@@ -9,6 +9,22 @@ description = "Aleya Linux PAckage Assistant"
 authors = [{name = "Robin 'Ruadeil' Degen", email = "mail@rudeil.lgbt"}]
 license = { file = "LICENSE" }
 readme = { file = "README.md", content-type = "text/markdown" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Operating System",
+    "Topic :: System :: Software Distribution",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)"
+]
 dependencies = []
 
 [project.scripts]
