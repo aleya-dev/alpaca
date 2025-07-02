@@ -210,10 +210,6 @@ EOF
         """
         Clean up the workspace directories created for this recipe context.
         This will remove the source, build, and package directories.
-
-        Args:
-            always_delete (bool): If True, always delete the workspace directories regardless of configuration.
-                                  Defaults to False.
         """
 
         if not exists(self.configuration.package_workspace_path):
