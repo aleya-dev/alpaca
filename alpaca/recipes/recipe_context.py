@@ -87,7 +87,7 @@ class RecipeContext:
             self._handle_build()
             self._handle_check()
             self._handle_package()
-        except Exception as e:
+        except Exception:
             raise
         finally:
             self._delete_workspace_directories()
