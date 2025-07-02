@@ -91,6 +91,9 @@ class RepositoryCache:
  
         candidates : list[_PackageCandidate] = []
 
+        if len(self.configuration.repositories) == 0:
+            raise Exception("No repositories configured. Please add repositories to the configuration.")
+
         for repo_ref in self.configuration.repositories:
             repo_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
 
