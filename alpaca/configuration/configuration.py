@@ -125,6 +125,7 @@ class Configuration:
         normalized_config.download_cache_path = str(Path(self.download_cache_path).expanduser().resolve())
         normalized_config.package_workspace_path = str(Path(self.package_workspace_path).expanduser().resolve())
         normalized_config.package_artifact_path = str(Path(self.package_artifact_path).expanduser().resolve())
+        normalized_config.repository_cache_path = str(Path(self.repository_cache_path).expanduser().resolve())
 
         return normalized_config
 
