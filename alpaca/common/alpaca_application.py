@@ -22,18 +22,7 @@ def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:
 
 
 def _create_configuration_for_application(args: Namespace):
-    # Hack to ensure that verbose logs from the configuration module are printed
-    if args.verbose:
-        enable_verbose_logging()
-
-    config = Configuration.create_application_config(args)
-
-    if config.verbose_output:
-        enable_verbose_logging()
-
-    config.ensure_executables_exist()
-
-    return config
+    return Configuration.create_application_config(args)
 
 
 def handle_main(application_name: str, require_root: bool, disallow_root: bool,
@@ -55,7 +44,16 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
 
         args = parser.parse_args()
 
+        # Hack to ensure that verbose logs from the configuration module are printed
+        if args.verbose:
+            enable_verbose_logging()
+
         config = _create_configuration_for_application(args)
+
+        config.ensure_executables_exist()
+
+        if config.verbose_output:
+            enable_verbose_logging()
 
         is_root = getuid() == 0
 
