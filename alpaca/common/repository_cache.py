@@ -59,7 +59,11 @@ class RepositoryCache:
         Args:
             path (str): The path or name of the package to find.
         """
-        self._ensure_repository_cache_path_exists()
+        if not exists(self.configuration.repository_cache_path):
+            raise ValueError(
+                f"Repository cache path '{self.configuration.repository_cache_path}' does not exist. "
+                "Please run 'apupdate' to create the cache."
+            )
 
         if path == "":
             logger.error("No package name given.")
