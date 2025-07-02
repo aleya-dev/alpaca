@@ -19,14 +19,14 @@ class RepositoryCache:
     def __init__(self, configuration: Configuration):
         self.configuration = configuration
 
-        self._ensure_repository_cache_path_exists()
-
     def update_cache(self):
         """
         Update the repository cache based on the current configuration.
         This method should be implemented to update the cache as needed.
         """
-        # Implementation of cache update logic goes here
+
+        self._ensure_repository_cache_path_exists()
+
         for repo_ref in self.configuration.repositories:
             if repo_ref.get_type() == RepositoryType.GIT:
                 self._update_git_cache(repo_ref)
@@ -43,6 +43,8 @@ class RepositoryCache:
         Args:
             path (str): The path or name of the package to find.
         """
+        self._ensure_repository_cache_path_exists()
+
         if path == "":
             logger.error("No package name given.")
             return None
