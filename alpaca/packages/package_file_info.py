@@ -76,3 +76,16 @@ def read_file_info_from_string(file_info_string: str) -> list[FileInfo]:
         file_info_list.append(FileInfo(permissions, sha256_hash, int(size), name))
 
     return file_info_list
+
+
+def get_total_bytes(file_info_list: list[FileInfo]) -> int:
+    """
+    Calculate the total size of all files in the file info list.
+
+    Args:
+        file_info_list (list[FileInfo]): The list of FileInfo objects.
+
+    Returns:
+        int: The total size of all files.
+    """
+    return sum(file_info.size for file_info in file_info_list)
