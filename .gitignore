@@ -3,4 +3,4 @@ dist/
 __pycache__/
 .idea/
 *.egg-info/
-*.tar.gz
+*.tgz

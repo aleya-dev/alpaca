@@ -174,7 +174,8 @@ class RecipeContext:
         """
 
         output_archive = join(self.configuration.package_artifact_path,
-                              f"{self.description.name}-{self.description.version}-{self.description.release}.tar.gz")
+                              f"{self.description.name}-{self.description.version}-"
+                              f"{self.description.release}{self.configuration.package_file_extension}")
 
         logger.info("Packaging package...")
         self._call_script_function(

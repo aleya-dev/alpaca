@@ -18,6 +18,7 @@ _default_cat_executable = "/usr/bin/cat"
 
 
 _default_recipe_file_extension = ".recipe.sh"
+_default_package_file_extension = ".alpaca-package.tgz"
 
 
 class Configuration:
@@ -58,6 +59,7 @@ class Configuration:
         self.cat_executable: str | None = kwargs.get('cat_executable', None)
 
         self.recipe_file_extension: str | None = kwargs.get('recipe_file_extension', None)
+        self.package_file_extension: str | None = kwargs.get('package_file_extension', None)
 
     @classmethod
     def create_application_config(cls, application_arguments: Namespace) -> Self:
@@ -208,8 +210,9 @@ class Configuration:
             fakeroot_executable=_default_fakeroot_executable,
             shell_executable=_default_shell_executable,
             tar_executable=_default_tar_executable,
+            cat_executable=_default_cat_executable,
             recipe_file_extension=_default_recipe_file_extension,
-            cat_executable=_default_cat_executable
+            package_file_extension=_default_package_file_extension
         )
 
     @classmethod
