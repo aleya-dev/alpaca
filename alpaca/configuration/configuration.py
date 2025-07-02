@@ -14,7 +14,6 @@ _alpaca_config_env_var = "ALPACA_CONFIG"
 
 _default_fakeroot_executable = "/usr/bin/fakeroot"
 _default_shell_executable = "/usr/bin/bash"
-_default_tar_executable = "/usr/bin/tar"
 _default_cat_executable = "/usr/bin/cat"
 
 
@@ -56,7 +55,6 @@ class Configuration:
 
         self.fakeroot_executable: str | None = kwargs.get('fakeroot_executable', None)
         self.shell_executable: str | None = kwargs.get('shell_executable', None)
-        self.tar_executable: str | None = kwargs.get('tar_executable', None)
         self.cat_executable: str | None = kwargs.get('cat_executable', None)
 
         self.recipe_file_extension: str | None = kwargs.get('recipe_file_extension', None)
@@ -145,8 +143,7 @@ class Configuration:
         """
         executables = [
             self.fakeroot_executable,
-            self.shell_executable,
-            self.tar_executable
+            self.shell_executable
         ]
 
         for executable in executables:
@@ -216,7 +213,6 @@ class Configuration:
             repository_cache_path="/var/lib/alpaca/cache",
             fakeroot_executable=_default_fakeroot_executable,
             shell_executable=_default_shell_executable,
-            tar_executable=_default_tar_executable,
             cat_executable=_default_cat_executable,
             recipe_file_extension=_default_recipe_file_extension,
             package_file_extension=_default_package_file_extension

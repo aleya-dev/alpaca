@@ -187,7 +187,7 @@ sha256sums=({" ".join(self.description.sha256sums)})
 package_options=({" ".join(self.description.available_options)})
 EOF
 
-                {self.configuration.tar_executable} -czvf {output_archive} -C {self.package_directory} .
+                {get_alpaca_tool_command("apcommand")} compress {self.package_directory} {output_archive}
             ''', print_output=not self.configuration.suppress_build_output, use_fakeroot=True)
 
     def _delete_workspace_directories(self):
