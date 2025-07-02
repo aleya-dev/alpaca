@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 
 from alpaca.common.alpaca_application import handle_main
 from alpaca.configuration.configuration import Configuration
-from alpaca.recipes.package_file_info import write_file_info
+from alpaca.packages.package_file_info import write_file_info
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
