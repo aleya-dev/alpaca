@@ -1,20 +1,12 @@
-import importlib.metadata
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
-__version__ = importlib.metadata.version("aleya-alpaca")
-
-
-from alpaca.common.logging import enable_verbose_logging, logger
+from alpaca.common.alpaca_application import handle_main
 from alpaca.configuration.configuration import Configuration
 from alpaca.recipes.package_file_info import write_file_info
 
 
-def _create_arg_parser():
-    parser = ArgumentParser(
-        description=f"AlpaCA command - The Aleya Package Configuration Assistant ({__version__})")
+def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
 
     fileinfo_parser = subparsers.add_parser("fileinfo",
                                             help="Generate a .fileinfo file for a given package or recipe file.")
@@ -24,30 +16,19 @@ def _create_arg_parser():
 
     return parser
 
+
+def _command_main(args: Namespace, config: Configuration):
+    if args.command == "fileinfo":
+        write_file_info(args.package_dir)
+
+
 def main():
-    try:
-        parser = _create_arg_parser()
-        args = parser.parse_args()
-
-        # Hack to ensure that verbose logs from the configuration module are printed
-        if args.verbose:
-            enable_verbose_logging()
-
-        config = Configuration.create_application_config(args)
-
-        if config.verbose_output:
-            enable_verbose_logging()
-
-        logger.debug("-=-=-=-=-=-=-=-=-=-=-=-=-=")
-        logger.debug(config.dump_config())
-        logger.debug("-=-=-=-=-=-=-=-=-=-=-=-=-=")
-
-        if args.command == "fileinfo":
-            write_file_info(args.package_dir)
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        exit(1)
+    handle_main(
+        "command",
+        require_root=False,
+        disallow_root=False,
+        create_arguments_callback=_create_arg_parser,
+        main_function_callback=_command_main)
 
 
 if __name__ == "__main__":
