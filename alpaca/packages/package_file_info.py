@@ -12,6 +12,17 @@ _file_ignore_list = [
 ]
 
 
+class FileInfo:
+    def __init__(self, permissions: str, sha256_hash: str, size: int, name: str):
+        self.permissions = permissions
+        self.sha256_hash = sha256_hash
+        self.size = size
+        self.name = name
+
+    def __str__(self):
+        return f"{self.permissions} {self.sha256_hash} {self.size} {self.name}"
+
+
 def write_file_info(path: Path | str):
     """
     Write a .file_info file to the specified path.
@@ -41,3 +52,27 @@ def write_file_info(path: Path | str):
                 file_info.write(f"{permissions} {sha256_hash} {size} {file.name}\n")
 
     logger.info(f"File info written to {path / _file_info_file_name}")
+
+
+def read_file_info_from_string(file_info_string: str) -> list[FileInfo]:
+    """
+    Read file info from a string and return a list of FileInfo objects.
+
+    Args:
+        file_info_string (str): The string containing file info.
+
+    Returns:
+        list[FileInfo]: A list of FileInfo objects.
+    """
+    file_info_list = []
+    lines = file_info_string.strip().splitlines()
+
+    for line in lines:
+        parts = line.split()
+        if len(parts) != 4:
+            raise ValueError(f"Invalid file info line: '{line}'")
+
+        permissions, sha256_hash, size, name = parts
+        file_info_list.append(FileInfo(permissions, sha256_hash, int(size), name))
+
+    return file_info_list
