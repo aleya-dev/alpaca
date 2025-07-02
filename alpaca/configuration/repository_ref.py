@@ -27,7 +27,7 @@ class RepositoryRef:
             self._path = ref_string[4:]
             self._repo_type = RepositoryType.GIT
         elif ref_string.startswith("local+"):
-            self._path = ref_string[6:]
+            self._path = str(Path(ref_string[6:]).expanduser().resolve())
             self._repo_type = RepositoryType.LOCAL
         else:
             raise ValueError(f"Invalid or unsupported repository type: {ref_string}")
