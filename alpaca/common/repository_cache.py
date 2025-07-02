@@ -1,6 +1,7 @@
 from os import makedirs
 from os.path import exists, join
 from pathlib import Path
+from shutil import rmtree
 
 from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
@@ -34,6 +35,21 @@ class RepositoryCache:
                 logger.debug(f"Skipping local repository cache update for {repo_ref}")
             else:
                 raise ValueError(f"Unsupported repository type: {repo_ref.get_type()}")
+
+    def reset_cache(self):
+        """
+        Reset the repository cache by removing all cached repositories and redownloading them.
+        """
+
+        for repo_ref in self.configuration.repositories:
+            if repo_ref.get_type() != RepositoryType.GIT:
+                continue
+
+            repository_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
+            if exists(repository_path):
+                rmtree(repository_path)
+
+            self._update_git_cache(repo_ref)
 
     def find_recipe(self, path: str) -> Path | None:
         """
