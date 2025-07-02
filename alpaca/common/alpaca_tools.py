@@ -17,6 +17,6 @@ def get_alpaca_tool_command(name: str) -> str:
         logger.debug(f"Running in Dev mode. Using script path: {full_module_path}")
         command += f"PYTHONPATH={full_module_path} "
 
-    command += f'''python3 -c "from alpaca.{name}.{name}_main import main; main()" '''
+    command += f'''python3 -c "from alpaca.{name}.main import main; main()" '''
 
     return command

@@ -1,4 +1,4 @@
 #!/bin/env python3
 
-from alpaca.apcommand.apcommand_main import main
+from alpaca.apcommand.main import main
 main()

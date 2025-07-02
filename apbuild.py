@@ -1,4 +1,4 @@
 #!/bin/env python3
 
-from alpaca.apbuild.apbuild_main import main
+from alpaca.apbuild.main import main
 main()

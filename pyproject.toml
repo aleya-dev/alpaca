@@ -31,7 +31,7 @@ dependencies = []
 test = ["pytest"]
 
 [project.scripts]
-#alpaca = "alpaca.main:main"
-apbuild = "alpaca.apbuild.apbuild_main:main"
+apbuild = "alpaca.apbuild.main:main"
+apcommand = "alpaca.apcommand.main:main"
 
 [tool.setuptools_scm]
