@@ -34,5 +34,6 @@ test = ["pytest"]
 apbuild = "alpaca.apbuild.main:main"
 apcommand = "alpaca.apcommand.main:main"
 apinstall = "alpaca.apinstall.main:main"
+apupdate = "alpaca.apupdate.main:main"
 
 [tool.setuptools_scm]
