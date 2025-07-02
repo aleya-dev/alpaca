@@ -39,7 +39,7 @@ def compress_tar(directory: Path, archive_path: Path):
         for filename in filenames:
             files.append(join(root, filename))
 
-    with tarfile.open(archive_path, "w:xz") as tar:
+    with tarfile.open(archive_path, "w:gz") as tar:
         for file in files:
             tar.add(file, arcname=relpath(file, directory))
 
