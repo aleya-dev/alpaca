@@ -49,7 +49,6 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
             enable_verbose_logging()
 
         config = _create_configuration_for_application(args)
-
         config.ensure_executables_exist()
 
         if config.verbose_output:
