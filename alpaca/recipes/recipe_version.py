@@ -80,8 +80,15 @@ class RecipeVersion:
 
         requested_version_obj = cls.from_string(requested_version)
 
+        # sort versions to ensure we can find the highest version
+        versions.sort()
+
+        highest_version = None
+
+        # Ensure we always use the highest release for the requested version
+        # TODO: Should it be allowed to specify a specific build version?
         for version in versions:
             if version == requested_version_obj:
-                return version
+                highest_version = version
 
-        return None
+        return highest_version
