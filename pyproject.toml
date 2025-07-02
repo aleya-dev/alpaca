@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aleya-alpaca"
+dynamic = ["version"]
+description = "Aleya Linux PAckage Assistant"
+authors = [{name = "Robin 'Ruadeil' Degen", email = "mail@rudeil.lgbt"}]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+readme = { file = "README.md", content-type = "text/markdown" }
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Operating System",
+    "Topic :: System :: Software Distribution",
+    "Topic :: Utilities"
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+#alpaca = "alpaca.main:main"
+apbuild = "alpaca.apbuild.apbuild_main:main"
+
+[tool.setuptools_scm]

@@ -1,0 +1,123 @@
+from alpaca.common.shell_command import ShellCommand
+from alpaca.old.configuration_old import Configuration
+from alpaca.common.logging import logger
+from alpaca.recipes.atom import Atom
+from pathlib import Path
+
+
+class PackageDescription:
+    def __init__(
+        self,
+        atom: Atom,
+        url: str,
+        licenses: list[str],
+        dependencies: list[str],
+        build_dependencies: list[str],
+        sources: list[str],
+        sha256sums: list[str],
+        available_options: list[str],
+        recipe_path: str,
+    ):
+        self.atom = atom
+        self.url = url
+        self.licenses = licenses
+        self.dependencies = dependencies
+        self.build_dependencies = build_dependencies
+        self.sources = sources
+        self.sha256sums = sha256sums
+        self.available_options = available_options
+        self.recipe_path = recipe_path
+
+        if len(sources) != len(sha256sums):
+            raise ValueError(
+                f"Number of sources ({len(sources)}) does not match number of sha256sums ({len(sha256sums)})"
+            )
+
+    def get_recipe_directory(self):
+        # Get the path where package_path is in
+        return Path(self.recipe_path).parent
+
+    @staticmethod
+    def _read_package_variable(
+        path: str, variable: str, env: dict[str, str], is_array: bool = False
+    ) -> str:
+        if is_array:
+            return ShellCommand.exec_get_value(
+                f"source {path} && echo ${{{variable}[@]}}", environment=env
+            )
+        else:
+            return ShellCommand.exec_get_value(
+                f"source {path} && echo ${variable}", environment=env
+            )
+
+    @staticmethod
+    def load(atom_info: Atom, path: str) -> "PackageDescription":
+        logger.debug(f"Loading package description from {path}")
+
+        env = PackageDescription._get_environment_variables(atom_info)
+
+        url = PackageDescription._read_package_variable(path, "url", env)
+
+        licenses = PackageDescription._read_package_variable(
+            path, "licenses", env, is_array=True
+        ).split()
+
+        dependencies = PackageDescription._read_package_variable(
+            path, "dependencies", env, is_array=True
+        ).split()
+
+        build_dependencies = PackageDescription._read_package_variable(
+            path, "build_dependencies", env, is_array=True
+        ).split()
+
+        sources = PackageDescription._read_package_variable(
+            path, "sources", env, is_array=True
+        ).split()
+
+        sha256sums = PackageDescription._read_package_variable(
+            path, "sha256sums", env, is_array=True
+        ).split()
+
+        available_options = PackageDescription._read_package_variable(
+            path, "package_options", env, is_array=True
+        ).split()
+
+        return PackageDescription(
+            atom_info,
+            url,
+            licenses,
+            dependencies,
+            build_dependencies,
+            sources,
+            sha256sums,
+            available_options,
+            path,
+        )
+
+    @staticmethod
+    def _get_environment_variables(atom_info: Atom) -> dict[str, str]:
+        """
+        Create a dictionary of environment variables to pass to the package script
+
+        Returns:
+            dict[str, str]: A dictionary of environment variables to be passed to the package script
+        """
+
+        config = Configuration()
+        env = {}
+
+        # This is a reduced set of variables available in Package, since
+        # a lot of these are not yet determined at this point
+        env["target_architecture"] = config.target_architecture
+        env["target_platform"] = "aleya-linux-gnu"
+        env["package_atom"] = str(atom_info)
+        env["package_version"] = atom_info.version
+        env["package_build"] = atom_info.release
+
+        env["c_flags"] = config.c_flags
+        env["cpp_flags"] = config.cpp_flags
+        env["ld_flags"] = config.ld_flags
+        env["make_flags"] = config.make_flags
+        env["ninja_flags"] = config.ninja_flags
+
+        return env

@@ -1,0 +1,136 @@
+from alpaca.logging import logger
+from alpaca.common.shell_command import ShellCommand
+import hashlib
+import os
+from enum import Enum
+
+
+class RepositoryType(Enum):
+    GIT = "git"
+    LOCAL = "local"
+
+
+class Repository:
+    def __init__(self, entry: str, repository_path: str):
+        self._repository_path = repository_path
+        self._entry = entry
+
+        if entry.startswith("git+"):
+            self._path = entry[4:]
+            self._repo_type = RepositoryType.GIT
+        elif entry.startswith("local+"):
+            self._path = entry[6:]
+            self._repo_type = RepositoryType.LOCAL
+        else:
+            raise ValueError(f"Invalid or unsupported repository type: {entry}")
+
+    def update(self):
+        """
+        Update the repository to the latest version
+
+        Raises:
+            ValueError: If the repository type is invalid or unsupported
+        """
+
+        if self._repo_type == RepositoryType.GIT:
+            self._update_git()
+        elif self._repo_type == RepositoryType.LOCAL:
+            logger.info(
+                f"Skipping update for local repository {self._path}. It does not need to be updated."
+            )
+        else:
+            raise ValueError(
+                f"Invalid or unsupported repository type: {self._repo_type}"
+            )
+
+    def get_name(self) -> str:
+        """
+        Get the name of the repository
+
+        Returns:
+            str: The name of the repository
+        """
+        return self._entry
+
+    def get_defined_path(self) -> str:
+        """
+        Get the path to the repository as defined in the repository entry
+
+        Returns:
+            str: The path to the repository as defined in the repository entry
+        """
+        return self._path
+
+    def get_path(self) -> str:
+        """
+        Get the path to the repository on the local filesystem
+
+        Raises:
+            ValueError: If the repository type is invalid or unsupported
+
+        Returns:
+            str: The path to the repository
+        """
+
+        if self._repo_type == RepositoryType.GIT:
+            return self._get_cache_path()
+        elif self._repo_type == RepositoryType.LOCAL:
+            return self._path
+        else:
+            raise ValueError(
+                f"Invalid or unsupported repository type: {self._repo_type}"
+            )
+
+    def get_type(self) -> RepositoryType:
+        """
+        Get the type of the repository
+        """
+        return self._repo_type
+
+    def _update_git(self):
+        """
+        Update a git repository to the latest version
+
+        Raises:
+            ValueError: If the repository could not be cloned or updated
+        """
+        logger.info(f"Updating git repository {self._path}")
+
+        cache_path = self._get_cache_path()
+
+        if not os.path.exists(cache_path):
+            if (
+                ShellCommand.exec(f"git clone {self._path} {cache_path}").error_code
+                != 0
+            ):
+                logger.error(f"Failed to clone repository {self._path}")
+                raise ValueError(f"Failed to clone repository {self._path}")
+        else:
+            if ShellCommand.exec(f"git -C {cache_path} diff --quiet").error_code != 0:
+                logger.error(
+                    f"Local changes detected in repository {self._path}. "
+                    "Local changes in the cache are currently not supported. "
+                    "Please remove them."
+                )
+                raise ValueError(f"Local changes detected in repository {self._path}")
+
+            if ShellCommand.exec(f"git -C {cache_path} pull --ff-only").error_code != 0:
+                logger.error(f"Failed to update repository {self._path}")
+                raise ValueError(f"Failed to update repository {self._path}")
+
+    def _get_cache_path(self) -> str:
+        """
+        Get the path to the cache of the repository name on the local filesystem
+
+        Returns:
+            str: The path to the cache of the repository (e.g. ~/.alpaca/repositories/<hash>)
+        """
+        return os.path.join(self._repository_path, self._hash())
+
+    def _hash(self) -> str:
+        """
+        Get a hash of the repository entry
+        """
+        hash_object = hashlib.sha256()
+        hash_object.update(self._entry.encode("utf-8"))
+        return hash_object.hexdigest()
