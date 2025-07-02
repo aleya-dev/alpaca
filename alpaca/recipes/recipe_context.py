@@ -71,8 +71,7 @@ class RecipeContext:
         self.description = RecipeDescription(name=name, version=Version(version), release=release, url=url,
                                              licenses=licenses, dependencies=dependencies,
                                              build_dependencies=build_dependencies, sources=sources,
-                                             sha256sums=sha256sums,
-                                             available_options=available_options)
+                                             sha256sums=sha256sums, available_options=available_options)
 
     def create_package(self):
         """
@@ -127,10 +126,7 @@ class RecipeContext:
                 logger.info(f"Extracting file {basename(filename)}...")
                 extract_tar(Path(filename), self.source_directory)
 
-        self._call_script_function(
-            function_name="handle_sources",
-            working_dir=self.source_directory
-        )
+        self._call_script_function(function_name="handle_sources", working_dir=self.source_directory)
 
     def _handle_build(self):
         """
@@ -139,11 +135,8 @@ class RecipeContext:
         """
 
         logger.info("Building package...")
-        self._call_script_function(
-            function_name="handle_build",
-            working_dir=self.build_directory,
-            print_output=not self.configuration.suppress_build_output
-        )
+        self._call_script_function(function_name="handle_build", working_dir=self.build_directory,
+                                   print_output=not self.configuration.suppress_build_output)
 
     def _handle_check(self):
         """
@@ -161,11 +154,8 @@ class RecipeContext:
             return
 
         logger.info("Checking package...")
-        self._call_script_function(
-            function_name="handle_check",
-            working_dir=self.build_directory,
-            print_output=not self.configuration.suppress_build_output
-        )
+        self._call_script_function(function_name="handle_check", working_dir=self.build_directory,
+                                   print_output=not self.configuration.suppress_build_output)
 
     def _handle_package(self):
         """
@@ -178,10 +168,7 @@ class RecipeContext:
                               f"{self.description.release}{self.configuration.package_file_extension}")
 
         logger.info("Packaging package...")
-        self._call_script_function(
-            function_name="handle_package",
-            working_dir=self.build_directory,
-            post_script=f'''
+        self._call_script_function(function_name="handle_package", working_dir=self.build_directory, post_script=f'''
                 {get_alpaca_tool_command("apcommand")} fileinfo {self.package_directory}
 
                 echo {self._compute_binary_hash()} > {self.package_directory}/.hash 
@@ -201,10 +188,7 @@ package_options=({" ".join(self.description.available_options)})
 EOF
 
                 {self.configuration.tar_executable} -czvf {output_archive} -C {self.package_directory} .
-            ''',
-            print_output=not self.configuration.suppress_build_output,
-            use_fakeroot=True
-        )
+            ''', print_output=not self.configuration.suppress_build_output, use_fakeroot=True)
 
     def _delete_workspace_directories(self):
         """
@@ -311,9 +295,7 @@ EOF
 
         logger.verbose(f"Calling function {function_name} in package script from {working_dir}")
 
-        ShellCommand.exec(
-            configuration=self.configuration,
-            command=f'''
+        ShellCommand.exec(configuration=self.configuration, command=f'''
                 source {self.recipe_path}
 
                 {pre_script if pre_script else ''}
@@ -325,15 +307,14 @@ EOF
                 fi
 
                 {post_script if post_script else ''}
-            ''',
-            working_directory=working_dir,
-            environment=self._get_environment_variables(self.description.name, str(self.description.version), self.description.release),
-            print_output=print_output,
-            throw_on_error=True,
-            use_fakeroot=use_fakeroot
-        )
+            ''', working_directory=working_dir,
+                          environment=self._get_environment_variables(self.description.name,
+                                                                      str(self.description.version),
+                                                                      self.description.release),
+                          print_output=print_output,
+                          throw_on_error=True, use_fakeroot=use_fakeroot)
 
-    def _get_environment_variables(self, name: str|None, version: str|None, release: str|None) -> dict[str, str]:
+    def _get_environment_variables(self, name: str | None, version: str | None, release: str | None) -> dict[str, str]:
         """
         Get the environment variables for the recipe.
         This can be used to pass additional variables to the package script.
@@ -342,20 +323,12 @@ EOF
             dict[str, str]: The environment variables for the recipe.
         """
 
-        env = {
-            "alpaca_build": "1",
-            "alpaca_version": __version__,
-            "source_directory": join(self.source_directory),
-            "build_directory": join(self.build_directory),
-            "package_directory": join(self.package_directory),
-            "target_architecture": self.configuration.target_architecture,
-            "target_platform": "linux",
-            "c_flags": self.configuration.c_flags,
-            "cpp_flags": self.configuration.cpp_flags,
-            "ld_flags": self.configuration.ld_flags,
-            "make_flags": self.configuration.make_flags,
-            "ninja_flags": self.configuration.ninja_flags
-        }
+        env = {"alpaca_build": "1", "alpaca_version": __version__, "source_directory": join(self.source_directory),
+               "build_directory": join(self.build_directory), "package_directory": join(self.package_directory),
+               "target_architecture": self.configuration.target_architecture, "target_platform": "linux",
+               "c_flags": self.configuration.c_flags, "cpp_flags": self.configuration.cpp_flags,
+               "ld_flags": self.configuration.ld_flags, "make_flags": self.configuration.make_flags,
+               "ninja_flags": self.configuration.ninja_flags}
 
         if name is not None:
             env.update({"name": name})
