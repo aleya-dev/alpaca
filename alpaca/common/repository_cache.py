@@ -97,11 +97,17 @@ class RepositoryCache:
         for repo_ref in self.configuration.repositories:
             repo_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
 
+            logger.verbose(f"Repository {repo_ref.get_path()}")
+
             for stream in self.configuration.package_streams:
+                logger.verbose(f" - Searching '{stream}'...")
+
                 package_path_base = join(repo_path, stream, name)
 
                 if not exists(package_path_base):
                     continue
+
+                logger.verbose(f"Searching for recipes in {package_path_base}")
 
                 for recipe_file_path in Path(package_path_base).iterdir():
                     if not recipe_file_path.is_file():
