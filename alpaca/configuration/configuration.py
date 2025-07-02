@@ -2,6 +2,7 @@ from argparse import Namespace
 from configparser import ConfigParser
 from os import environ, getcwd, access, X_OK
 from os.path import exists, abspath, expandvars, expanduser, join
+from pathlib import Path
 from typing import Self
 
 from alpaca.common.logging import logger
@@ -119,6 +120,11 @@ class Configuration:
                 setattr(normalized_config, key, value)
             else:
                 setattr(normalized_config, key, "")
+
+        # Normalize paths since they may contain environment variables or user directories
+        normalized_config.download_cache_path = str(Path(self.download_cache_path).expanduser().resolve())
+        normalized_config.package_workspace_path = str(Path(self.package_workspace_path).expanduser().resolve())
+        normalized_config.package_artifact_path = str(Path(self.package_artifact_path).expanduser().resolve())
 
         return normalized_config
 
