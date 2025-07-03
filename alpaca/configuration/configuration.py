@@ -27,7 +27,7 @@ class Configuration:
     """
 
     def __init__(self, **kwargs) -> None:
-        self.verbose_output: bool | None = kwargs.get('verbose', None)
+        self.verbose_output: bool | None = kwargs.get('verbose_output', None)
         self.suppress_build_output: bool | None = kwargs.get('suppress_build_output', None)
         self.show_download_progress: bool | None = kwargs.get('show_download_progress', None)
 
