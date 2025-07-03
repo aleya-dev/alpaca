@@ -32,23 +32,21 @@ class RecipeDescription:
     """
     A class to represent a description for a package recipe.
     """
+    def __init__(self, **kwargs):
+        self.name: str | None = kwargs.get('name', None)
+        self.version: Version | None = kwargs.get('version', None)
+        self.release: str | None = kwargs.get('release', None)
+        self.url: str | None = kwargs.get('url', None)
+        self.licenses: list[str] = kwargs.get('licenses', [])
+        self.dependencies: list[str] = kwargs.get('dependencies', [])
+        self.build_dependencies: list[str] = kwargs.get('build_dependencies', [])
+        self.sources: list[str] = kwargs.get('sources', [])
+        self.sha256sums: list[str] = kwargs.get('sha256sums', [])
+        self.available_options: list[str] = kwargs.get('available_options', [])
 
-    def __init__(self, name: str, version: Version, release:str , url: str, licenses: list[str], dependencies: list[str],
-            build_dependencies: list[str], sources: list[str], sha256sums: list[str], available_options: list[str]):
-        self.name = name
-        self.version = version
-        self.release = release
-        self.url = url
-        self.licenses = licenses
-        self.dependencies = dependencies
-        self.build_dependencies = build_dependencies
-        self.sources = sources
-        self.sha256sums = sha256sums
-        self.available_options = available_options
-
-        if len(sources) != len(sha256sums):
+        if len(self.sources) != len(self.sha256sums):
             raise ValueError(
-                f"Number of sources ({len(sources)}) does not match number of sha256sums ({len(sha256sums)})")
+                f"Number of sources ({len(self.sources)}) does not match number of sha256sums ({len(self.sha256sums)})")
 
     @classmethod
     def read_from_package_description_string(cls, package_string: str) -> Self:
