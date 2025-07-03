@@ -23,7 +23,7 @@ def extract_tar(file_path: Path, destination_dir: Path):
     logger.verbose(f"File {file_path} extracted to {destination_dir}")
 
 
-def compress_tar(directory: Path, archive_path: Path):
+def compress_tar(directory: Path | str, archive_path: Path | str):
     """
     Compress a directory to a tar.xz archive
 
@@ -31,6 +31,9 @@ def compress_tar(directory: Path, archive_path: Path):
         directory (Path): The source directory to archive
         archive_path (Path): The path of the target archive
     """
+
+    directory = Path(directory)
+    archive_path = Path(archive_path)
 
     logger.verbose(f"Archiving directory {directory} to {archive_path}...")
 
