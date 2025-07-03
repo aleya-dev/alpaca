@@ -8,7 +8,6 @@ from shutil import rmtree
 from tarfile import is_tarfile
 from urllib.parse import urlparse
 
-from alpaca.common.alpaca_tools import get_alpaca_tool_command
 from alpaca.common.file_downloader import download_file
 from alpaca.common.hash import check_file_hash_from_string
 from alpaca.common.logging import logger
@@ -169,7 +168,7 @@ class RecipeContext:
 
         logger.info("Packaging package...")
         self._call_script_function(function_name="handle_package", working_dir=self.build_directory, post_script=f'''
-                {get_alpaca_tool_command("apcommand")} fileinfo {self.package_directory}
+                apcommand fileinfo {self.package_directory}
 
                 echo {self._compute_binary_hash()} > {self.package_directory}/.hash 
 
@@ -187,7 +186,7 @@ sha256sums=({" ".join(self.description.sha256sums)})
 package_options=({" ".join(self.description.available_options)})
 EOF
 
-                {get_alpaca_tool_command("apcommand")} compress {self.package_directory} {output_archive}
+                apcommand compress {self.package_directory} {output_archive}
             ''', print_output=not self.configuration.suppress_build_output, use_fakeroot=True)
 
     def _delete_workspace_directories(self):
