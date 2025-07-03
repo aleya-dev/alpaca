@@ -70,6 +70,13 @@ class BuildContext:
             logger.info("Keeping build directories...")
 
     @property
+    def recipe_directory(self) -> Path:
+        """
+        Get the path where the recipe is located.
+        """
+        return Path(self.recipe_path).parent
+
+    @property
     def source_directory(self) -> Path:
         """
         Get the path where the source files are located.

@@ -119,13 +119,6 @@ class RecipeContext:
             use_fakeroot=True
         )
 
-    @property
-    def recipe_directory(self) -> Path:
-        """
-        Get the path where the recipe is located.
-        """
-        return Path(self.build_context.recipe_path).parent
-
     def _call_script_function(self, function_name: str, working_dir: Path, pre_script: str | None = None,
                               post_script: str | None = None, print_output: bool = True, use_fakeroot: bool = False):
         """
@@ -188,9 +181,9 @@ class RecipeContext:
             logger.verbose(f"Source {source} is a direct path. Copying.")
             shutil.copy(source, source_directory)
         # If not, look relative to the package directory
-        elif isfile(join(self.recipe_directory, source)):
+        elif isfile(join(self.build_context.recipe_directory, source)):
             logger.verbose(f"Source {source} is relative to the recipe directory")
-            shutil.copy(join(self.recipe_directory, source), source_directory, )
+            shutil.copy(join(self.build_context.recipe_directory, source), source_directory, )
 
         file_path = join(source_directory, basename(source))
 
