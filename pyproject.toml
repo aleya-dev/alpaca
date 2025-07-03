@@ -27,6 +27,11 @@ classifiers = [
 ]
 dependencies = []
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alpaca"]
+exclude = ["devpkgs"]
+
 [project.optional-dependencies]
 test = ["pytest"]
 
