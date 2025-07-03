@@ -1,10 +1,7 @@
-import hashlib
 import importlib.metadata
 import shutil
-from os import makedirs
 from os.path import exists, join, isfile, basename
 from pathlib import Path
-from shutil import rmtree
 from tarfile import is_tarfile
 from urllib.parse import urlparse
 
@@ -14,8 +11,7 @@ from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.common.tar import extract_tar
 from alpaca.configuration.configuration import Configuration
-from alpaca.recipes.recipe_description import RecipeDescription
-from alpaca.recipes.version import Version
+from alpaca.recipes.build_context import BuildContext
 
 __version__ = importlib.metadata.version("aleya-alpaca")
 
@@ -36,45 +32,56 @@ class RecipeContext:
             Exception: If the recipe file does not exist.
         """
 
-        self.allow_workspace_cleanup = True
         self.configuration = configuration
-        self.recipe_path = Path(path).expanduser().resolve()
-        self.workspace_path: Path | None = None
+
+        self.build_context = BuildContext(
+            recipe_path=path,
+            configuration=self.configuration
+        )
 
         if not exists(path):
             raise Exception(f"Recipe not found: '{path}'")
 
         logger.debug(f"Loading package description from {path}")
 
-        early_env = self._get_environment_variables(None, None, None)
-        name = self._read_package_variable(self.recipe_path, "name", env=early_env)
-        version = self._read_package_variable(self.recipe_path, "version", env=early_env)
-        release = self._read_package_variable(self.recipe_path, "release", env=early_env)
+        early_env = self.build_context.get_environment_variables()
+        self.build_context.description.name = self._read_package_variable(self.build_context.recipe_path, "name",
+                                                                          env=early_env)
+        self.build_context.description.version = self._read_package_variable(self.build_context.recipe_path, "version",
+                                                                             env=early_env)
+        self.build_context.description.release = self._read_package_variable(self.build_context.recipe_path, "release",
+                                                                             env=early_env)
 
-        self.workspace_path = Path(join(self.configuration.package_workspace_path, name, str(version)))
+        # Signal that the name, version and release have been read. Update the internal build context environment
+        self.build_context.update_environment()
 
-        env = self._get_environment_variables(name, version, release)
+        env = self.build_context.get_environment_variables()
 
-        url = self._read_package_variable(self.recipe_path, "url", env=env)
+        self.build_context.description.url = self._read_package_variable(self.build_context.recipe_path, "url", env=env)
 
-        licenses = self._read_package_variable(self.recipe_path, "licenses", is_array=True, env=env).split()
+        self.build_context.description.licenses = self._read_package_variable(self.build_context.recipe_path,
+                                                                              "licenses", is_array=True,
+                                                                              env=env).split()
 
-        dependencies = self._read_package_variable(self.recipe_path, "dependencies", is_array=True, env=env).split()
+        self.build_context.description.dependencies = self._read_package_variable(self.build_context.recipe_path,
+                                                                                  "dependencies", is_array=True,
+                                                                                  env=env).split()
 
-        build_dependencies = self._read_package_variable(self.recipe_path, "build_dependencies", is_array=True,
-                                                         env=env).split()
+        self.build_context.description.build_dependencies = self._read_package_variable(self.build_context.recipe_path,
+                                                                                        "build_dependencies",
+                                                                                        is_array=True,
+                                                                                        env=env).split()
 
-        sources = self._read_package_variable(self.recipe_path, "sources", is_array=True, env=env).split()
+        self.build_context.description.sources = self._read_package_variable(self.build_context.recipe_path, "sources",
+                                                                             is_array=True, env=env).split()
 
-        sha256sums = self._read_package_variable(self.recipe_path, "sha256sums", is_array=True, env=env).split()
+        self.build_context.description.sha256sums = self._read_package_variable(self.build_context.recipe_path,
+                                                                                "sha256sums", is_array=True,
+                                                                                env=env).split()
 
-        available_options = self._read_package_variable(self.recipe_path, "package_options", is_array=True,
-                                                        env=env).split()
-
-        self.description = RecipeDescription(name=name, version=Version(version), release=release, url=url,
-                                             licenses=licenses, dependencies=dependencies,
-                                             build_dependencies=build_dependencies, sources=sources,
-                                             sha256sums=sha256sums, available_options=available_options)
+        self.build_context.description.available_options = self._read_package_variable(self.build_context.recipe_path,
+                                                                                       "package_options", is_array=True,
+                                                                                       env=env).split()
 
     def create_package(self):
         """
@@ -85,9 +92,8 @@ class RecipeContext:
         """
 
         try:
-            self.allow_workspace_cleanup = False
-            self._create_workspace_directories()
-            self.allow_workspace_cleanup = True
+            self.build_context.create_workspace_directories()
+            self.build_context.write_build_context_json()
             self._handle_sources()
             self._handle_build()
             self._handle_check()
@@ -95,42 +101,26 @@ class RecipeContext:
         except Exception:
             raise
         finally:
-            self._delete_workspace_directories()
-
-    def _create_workspace_directories(self):
-        if exists(self.workspace_path):
-            if self.configuration.package_delete_workspace:
-                logger.verbose(f"Removing existing workspace {self.workspace_path}")
-                rmtree(self.workspace_path)
-            else:
-                raise Exception(f"Workspace '{self.workspace_path}' must not exist. "
-                                "If you wish to delete it, you can use the --delete-workdir option.")
-
-        logger.debug("Creating workspace directories: %s", self.workspace_path)
-
-        makedirs(self.workspace_path)
-        makedirs(self.source_directory)
-        makedirs(self.build_directory)
-        makedirs(self.package_directory)
+            self.build_context.delete_workspace_directories()
 
     def _handle_sources(self):
         logger.info("Handle sources...")
 
-        if len(self.description.sources) != len(self.description.sha256sums):
-            raise Exception(f"Number of sources ({len(self.description.sources)}) does not match "
-                            f"number of sha256sums ({len(self.description.sha256sums)})")
+        if len(self.build_context.description.sources) != len(self.build_context.description.sha256sums):
+            raise Exception(f"Number of sources ({len(self.build_context.description.sources)}) does not match "
+                            f"number of sha256sums ({len(self.build_context.description.sha256sums)})")
 
-        if len(self.description.sources) == 0:
+        if len(self.build_context.description.sources) == 0:
             return
 
-        for source, sha256sum in zip(self.description.sources, self.description.sha256sums):
+        for source, sha256sum in zip(self.build_context.description.sources, self.build_context.description.sha256sums):
             filename = self._download_source_file(source, sha256sum)
 
             if is_tarfile(filename):
                 logger.info(f"Extracting file {basename(filename)}...")
-                extract_tar(Path(filename), self.source_directory)
+                extract_tar(Path(filename), self.build_context.source_directory)
 
-        self._call_script_function(function_name="handle_sources", working_dir=self.source_directory)
+        self._call_script_function(function_name="handle_sources", working_dir=self.build_context.source_directory)
 
     def _handle_build(self):
         """
@@ -139,7 +129,7 @@ class RecipeContext:
         """
 
         logger.info("Building package...")
-        self._call_script_function(function_name="handle_build", working_dir=self.build_directory,
+        self._call_script_function(function_name="handle_build", working_dir=self.build_context.build_directory,
                                    print_output=not self.configuration.suppress_build_output)
 
     def _handle_check(self):
@@ -158,7 +148,7 @@ class RecipeContext:
             return
 
         logger.info("Checking package...")
-        self._call_script_function(function_name="handle_check", working_dir=self.build_directory,
+        self._call_script_function(function_name="handle_check", working_dir=self.build_context.build_directory,
                                    print_output=not self.configuration.suppress_build_output)
 
     def _handle_package(self):
@@ -167,101 +157,22 @@ class RecipeContext:
         After that it will package the built package into a tar.xz archive to serve as the binary cache.
         """
 
-        output_archive = join(self.configuration.package_artifact_path,
-                              f"{self.description.name}-{self.description.version}-"
-                              f"{self.description.release}{self.configuration.package_file_extension}")
-
         logger.info("Packaging package...")
-        self._call_script_function(function_name="handle_package", working_dir=self.build_directory, post_script=f'''
-                apcommand fileinfo {self.package_directory}
 
-                echo {self._compute_binary_hash()} > {self.package_directory}/.hash 
-
-                {self.configuration.cat_executable} > {self.package_directory}/.package_info <<EOF
-# Generated by Aleya Linux Alpaca {__version__}
-name="{self.description.name}"
-version="{self.description.version}"
-release="{self.description.release}"
-url="{self.description.url}"
-licenses=({" ".join(self.description.licenses)})
-dependencies=({" ".join(self.description.dependencies)})
-build_dependencies=({" ".join(self.description.build_dependencies)})
-sources=({" ".join(self.description.sources)})
-sha256sums=({" ".join(self.description.sha256sums)})
-package_options=({" ".join(self.description.available_options)})
-EOF
-
-                apcommand compress {self.package_directory} {output_archive}
-            ''', print_output=not self.configuration.suppress_build_output, use_fakeroot=True)
-
-    def _delete_workspace_directories(self):
-        """
-        Clean up the workspace directories created for this recipe context.
-        This will remove the source, build, and package directories.
-        """
-
-        if not self.allow_workspace_cleanup:
-            return
-
-        if not exists(self.workspace_path):
-            return
-
-        if not self.configuration.keep_build_directory:
-            logger.info("Cleaning up build directories...")
-            rmtree(self.workspace_path)
-        else:
-            logger.info("Keeping build directories...")
+        self._call_script_function(
+            function_name="handle_package",
+            working_dir=self.build_context.build_directory,
+            post_script=f'apcommand deploy {self.build_context.workspace_path}',
+            print_output=not self.configuration.suppress_build_output,
+            use_fakeroot=True
+        )
 
     @property
     def recipe_directory(self) -> Path:
         """
         Get the path where the recipe is located.
         """
-        return Path(self.recipe_path).parent
-
-    @property
-    def source_directory(self) -> Path:
-        """
-        Get the path where the source files are located.
-        """
-        return Path(self.workspace_path, "source")
-
-    @property
-    def build_directory(self) -> Path:
-        """
-        Get the path where the build files are located.
-        """
-        return Path(self.workspace_path, "build")
-
-    @property
-    def package_directory(self) -> Path:
-        """
-        Get the path where the package files are located.
-        """
-        return Path(self.workspace_path, "package")
-
-    def _compute_binary_hash(self) -> str:
-        """
-        Compute a hash of the package script and options to determine if a prebuilt binary is available
-        This can be used to skip building from source if the binary is already available
-
-        Returns:
-            str: The hash of the package script and options
-        """
-
-        with open(self.recipe_path, "r") as file:
-            package_script = file.read()
-
-        hash_object = hashlib.sha256()
-        hash_object.update(package_script.encode("utf-8"))
-        hash_object.update(self.configuration.target_architecture.encode("utf-8"))
-
-        # Left for future use if options are needed
-        # for key in sorted(self.options.keys()):
-        #    hash_object.update(key.encode("utf-8"))
-        #    hash_object.update(str(self.options[key]).encode("utf-8"))
-
-        return hash_object.hexdigest()
+        return Path(self.build_context.recipe_path).parent
 
     def _read_package_variable(self, path: Path, variable: str, env: dict[str, str] | None = None,
                                is_array: bool = False) -> str:
@@ -301,7 +212,7 @@ EOF
         logger.verbose(f"Calling function {function_name} in package script from {working_dir}")
 
         ShellCommand.exec(configuration=self.configuration, command=f'''
-                source {self.recipe_path}
+                source {self.build_context.recipe_path}
 
                 {pre_script if pre_script else ''}
 
@@ -313,47 +224,9 @@ EOF
 
                 {post_script if post_script else ''}
             ''', working_directory=working_dir,
-                          environment=self._get_environment_variables(self.description.name,
-                                                                      str(self.description.version),
-                                                                      self.description.release),
+                          environment=self.build_context.get_environment_variables(),
                           print_output=print_output,
                           throw_on_error=True, use_fakeroot=use_fakeroot)
-
-    def _get_environment_variables(self, name: str | None, version: str | None, release: str | None) -> dict[str, str]:
-        """
-        Get the environment variables for the recipe.
-        This can be used to pass additional variables to the package script.
-
-        Returns:
-            dict[str, str]: The environment variables for the recipe.
-        """
-
-        env = {"alpaca_build": "1",
-               "alpaca_version": __version__,
-               "target_architecture": self.configuration.target_architecture,
-               "target_platform": "linux",
-               "c_flags": self.configuration.c_flags,
-               "cpp_flags": self.configuration.cpp_flags,
-               "ld_flags": self.configuration.ld_flags,
-               "make_flags": self.configuration.make_flags,
-               "ninja_flags": self.configuration.ninja_flags}
-
-        if self.workspace_path:
-            env.update({
-                "source_directory": str(self.source_directory),
-                "build_directory": str(self.build_directory),
-                "package_directory": str(self.package_directory)})
-
-        if name is not None:
-            env.update({"name": name})
-
-        if version is not None:
-            env.update({"version": version})
-
-        if release is not None:
-            env.update({"release": release})
-
-        return env
 
     def _download_source_file(self, source: str, sha256sum: str) -> str:
         """
@@ -370,23 +243,25 @@ EOF
             str: The full path to the downloaded file
         """
 
-        logger.info(f"Downloading source {source} to {self.source_directory}")
+        source_directory = self.build_context.source_directory
+
+        logger.info(f"Downloading source {source} to {source_directory}")
 
         # If the source is a URL
         if urlparse(source).scheme != "":
             logger.verbose(f"Source {source} is a URL. Downloading.")
-            download_file(self.configuration, source, self.source_directory,
+            download_file(self.configuration, source, source_directory,
                           show_progress=self.configuration.show_download_progress)
         # If not, check if it is a full path
         elif isfile(source):
             logger.verbose(f"Source {source} is a direct path. Copying.")
-            shutil.copy(source, self.source_directory)
+            shutil.copy(source, source_directory)
         # If not, look relative to the package directory
         elif isfile(join(self.recipe_directory, source)):
             logger.verbose(f"Source {source} is relative to the recipe directory")
-            shutil.copy(join(self.recipe_directory, source), self.source_directory, )
+            shutil.copy(join(self.recipe_directory, source), source_directory, )
 
-        file_path = join(self.source_directory, basename(source))
+        file_path = join(source_directory, basename(source))
 
         # Check the hash of the file
         if not check_file_hash_from_string(file_path, sha256sum):
