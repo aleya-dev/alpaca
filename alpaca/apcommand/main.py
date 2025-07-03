@@ -16,24 +16,27 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
                                                    help="Handle all package deploy steps. "
                                                    "This is intended to be used by alpaca itself to handle the "
                                                    "deploy steps of a package inside of a fakeroot.")
-    compress_package_parser.add_argument("workspace_path", type=str,
+    compress_package_parser.add_argument("workspace_dir", type=str,
                                          help="The path to the workspace root of the package to deploy during package.")
+
+    compress_package_parser.add_argument("output_dir", type=str,
+                                         help="The output directory where the package will be deployed.")
 
     return parser
 
 
 def _command_main(args: Namespace, configuration: Configuration):
     if args.command == "deploy":
-        logger.info(f"Deploying package from workspace: {args.workspace_path}")
+        logger.info(f"Deploying package from workspace: {args.workspace_dir}")
 
-        build_context = BuildContext.create_from_workspace(configuration, args.workspace_path)
+        build_context = BuildContext.create_from_workspace(configuration, args.workspace_dir)
         write_file_info(build_context.package_directory)
         build_context.description.write_package_description(
             build_context.package_directory / ".package_info"
         )
         build_context.write_package_hash()
 
-        output_archive = join(configuration.package_artifact_path,
+        output_archive = join(args.output_dir,
                                 f"{build_context.description.name}-{build_context.description.version}-"
                                 f"{build_context.description.release}{configuration.package_file_extension}")
 
