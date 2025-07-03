@@ -18,6 +18,9 @@ def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:
 
     parser.add_argument("--version", action="version", version=f"AlpaCA version: {__version__}")
 
+    parser.add_argument("--trace", action="store_true", help="Enable trace logging for debugging purposes "
+        "This will disable the global exception handler and will cause the application to crash on unhandled errors. ")
+
     return parser
 
 
@@ -38,6 +41,8 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
         create_arguments_callback (function): A function to create the argument parser for the application.
         main_function_callback (function): The main function of the application.
     """
+    args: Namespace | None  = None
+
     try:
         parser = _create_arg_parser_for_application(application_name)
         parser = create_arguments_callback(parser)
@@ -71,4 +76,8 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
 
     except Exception as e:
         logger.fatal(f"An error has occurred: {e}")
+
+        if args and args.trace:
+            raise e
+
         exit(1)
