@@ -36,8 +36,10 @@ class RecipeContext:
             Exception: If the recipe file does not exist.
         """
 
+        self.allow_workspace_cleanup = True
         self.configuration = configuration
         self.recipe_path = Path(path).expanduser().resolve()
+        self.workspace_path: Path | None = None
 
         if not exists(path):
             raise Exception(f"Recipe not found: '{path}'")
@@ -48,6 +50,8 @@ class RecipeContext:
         name = self._read_package_variable(self.recipe_path, "name", env=early_env)
         version = self._read_package_variable(self.recipe_path, "version", env=early_env)
         release = self._read_package_variable(self.recipe_path, "release", env=early_env)
+
+        self.workspace_path = Path(join(self.configuration.package_workspace_path, name, str(version)))
 
         env = self._get_environment_variables(name, version, release)
 
@@ -81,7 +85,9 @@ class RecipeContext:
         """
 
         try:
+            self.allow_workspace_cleanup = False
             self._create_workspace_directories()
+            self.allow_workspace_cleanup = True
             self._handle_sources()
             self._handle_build()
             self._handle_check()
@@ -92,18 +98,17 @@ class RecipeContext:
             self._delete_workspace_directories()
 
     def _create_workspace_directories(self):
-        workspace_path = self.configuration.package_workspace_path
-
-        if exists(workspace_path):
+        if exists(self.workspace_path):
             if self.configuration.package_delete_workspace:
-                logger.verbose(f"Removing existing workspace {workspace_path}")
-                rmtree(workspace_path)
+                logger.verbose(f"Removing existing workspace {self.workspace_path}")
+                rmtree(self.workspace_path)
             else:
-                raise Exception(f"Workspace '{workspace_path}' must not exist.")
+                raise Exception(f"Workspace '{self.workspace_path}' must not exist. "
+                                "If you wish to delete it, you can use the --delete-workdir option.")
 
-        logger.debug("Creating workspace directories: %s", workspace_path)
+        logger.debug("Creating workspace directories: %s", self.workspace_path)
 
-        makedirs(workspace_path)
+        makedirs(self.workspace_path)
         makedirs(self.source_directory)
         makedirs(self.build_directory)
         makedirs(self.package_directory)
@@ -195,15 +200,17 @@ EOF
         This will remove the source, build, and package directories.
         """
 
-        if not exists(self.configuration.package_workspace_path):
+        if not self.allow_workspace_cleanup:
+            return
+
+        if not exists(self.workspace_path):
             return
 
         if not self.configuration.keep_build_directory:
             logger.info("Cleaning up build directories...")
-            rmtree(self.configuration.package_workspace_path)
+            rmtree(self.workspace_path)
         else:
             logger.info("Keeping build directories...")
-
 
     @property
     def recipe_directory(self) -> Path:
@@ -217,21 +224,21 @@ EOF
         """
         Get the path where the source files are located.
         """
-        return Path(self.configuration.package_workspace_path, "source")
+        return Path(self.workspace_path, "source")
 
     @property
     def build_directory(self) -> Path:
         """
         Get the path where the build files are located.
         """
-        return Path(self.configuration.package_workspace_path, "build")
+        return Path(self.workspace_path, "build")
 
     @property
     def package_directory(self) -> Path:
         """
         Get the path where the package files are located.
         """
-        return Path(self.configuration.package_workspace_path, "package")
+        return Path(self.workspace_path, "package")
 
     def _compute_binary_hash(self) -> str:
         """
@@ -321,12 +328,21 @@ EOF
             dict[str, str]: The environment variables for the recipe.
         """
 
-        env = {"alpaca_build": "1", "alpaca_version": __version__, "source_directory": join(self.source_directory),
-               "build_directory": join(self.build_directory), "package_directory": join(self.package_directory),
-               "target_architecture": self.configuration.target_architecture, "target_platform": "linux",
-               "c_flags": self.configuration.c_flags, "cpp_flags": self.configuration.cpp_flags,
-               "ld_flags": self.configuration.ld_flags, "make_flags": self.configuration.make_flags,
+        env = {"alpaca_build": "1",
+               "alpaca_version": __version__,
+               "target_architecture": self.configuration.target_architecture,
+               "target_platform": "linux",
+               "c_flags": self.configuration.c_flags,
+               "cpp_flags": self.configuration.cpp_flags,
+               "ld_flags": self.configuration.ld_flags,
+               "make_flags": self.configuration.make_flags,
                "ninja_flags": self.configuration.ninja_flags}
+
+        if self.workspace_path:
+            env.update({
+                "source_directory": str(self.source_directory),
+                "build_directory": str(self.build_directory),
+                "package_directory": str(self.package_directory)})
 
         if name is not None:
             env.update({"name": name})
