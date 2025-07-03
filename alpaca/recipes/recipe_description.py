@@ -1,3 +1,6 @@
+import json
+from os.path import join
+from pathlib import Path
 from shlex import split
 from typing import Self
 
@@ -74,3 +77,33 @@ class RecipeDescription:
             sha256sums=_parse_array(data["sha256sums"]),
             available_options=_parse_array(data["package_options"]),
         )
+
+    @classmethod
+    def load_from_workspace_path(cls, workspace_path: Path | str) -> Self:
+        """
+        Load a recipe description from build_context.json in the specified workspace path.
+
+        Args:
+            workspace_path (Path | str): The path to build workspace or build context.
+
+        Returns:
+            RecipeDescription: An instance of RecipeDescription.
+        """
+
+        build_context_path = join(workspace_path, "build_context.json")
+
+        with open(build_context_path, 'r') as file:
+            build_context = json.load(file)
+
+            return cls(
+                name=build_context["name"],
+                version=Version(build_context["version"]),
+                release=build_context["release"],
+                url=build_context["url"],
+                licenses=build_context["licenses"],
+                dependencies=build_context["dependencies"],
+                build_dependencies=build_context["build_dependencies"],
+                sources=build_context["sources"],
+                sha256sums=build_context["sha256sums"],
+                available_options=build_context["available_options"]
+            )
