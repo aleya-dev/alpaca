@@ -53,6 +53,8 @@ class Configuration:
         self.package_delete_workspace: bool | None = kwargs.get('package_delete_workspace', None)
         self.package_artifact_path: str | None = kwargs.get('package_artifact_path', None)
 
+        self.prefix: str | None = kwargs.get('prefix', None)
+
         self.fakeroot_executable: str | None = kwargs.get('fakeroot_executable', None)
         self.shell_executable: str | None = kwargs.get('shell_executable', None)
         self.cat_executable: str | None = kwargs.get('cat_executable', None)
@@ -211,6 +213,7 @@ class Configuration:
             package_artifact_path=work_dir,
             download_cache_path="/var/lib/alpaca/downloads",
             repository_cache_path="/var/lib/alpaca/cache",
+            prefix="/",
             fakeroot_executable=_default_fakeroot_executable,
             shell_executable=_default_shell_executable,
             cat_executable=_default_cat_executable,
@@ -228,6 +231,7 @@ class Configuration:
             verbose_output=getattr(args, "verbose", None),
             suppress_build_output=getattr(args, "quiet", None),
             keep_build_directory=getattr(args, "keep", None),
+            prefix=getattr(args, "target", None),
             skip_package_check=getattr(args, "no_check", None),
             force_download=getattr(args, "download", None),
             package_workspace_path=getattr(args, "workdir", None),

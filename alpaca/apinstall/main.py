@@ -23,7 +23,7 @@ def _bytes_to_human(num):
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     # .alpaca-package.tgz is a configuration string; Parsed arguments are part of the configuration...
     parser.add_argument("package", type=str, help="The path to a binary package (.alpaca-package.tgz).")
-    parser.add_argument("--target", "-t", type=str, default='/',
+    parser.add_argument("--target", "-t", type=str,
                         help="The target directory where the package will be installed. "
                              "Defaults to '/' if not specified.")
 
@@ -40,7 +40,7 @@ def _install_main(args: Namespace, config: Configuration):
     if not exists(package_path):
         raise FileNotFoundError(f"Package file '{package_path}' does not exist.")
 
-    if args.target == '/' and not is_aleya_linux_host():
+    if config.prefix == '/' and not is_aleya_linux_host():
         raise ValueError("Target directory '/' is not allowed on non-Aleya Linux hosts. "
                          "If you intended to install a new system, please specify a the mounted "
                          "target directory using --target.")
