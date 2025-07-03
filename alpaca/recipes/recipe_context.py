@@ -198,13 +198,12 @@ EOF
         if not exists(self.configuration.package_workspace_path):
             return
 
-        if self.configuration.keep_build_directory:
-            logger.info("Keeping build directories...")
-            return
-        else:
+        if not self.configuration.keep_build_directory:
             logger.info("Cleaning up build directories...")
+            rmtree(self.configuration.package_workspace_path)
+        else:
+            logger.info("Keeping build directories...")
 
-        rmtree(self.configuration.package_workspace_path)
 
     @property
     def recipe_directory(self) -> Path:
