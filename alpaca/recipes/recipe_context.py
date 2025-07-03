@@ -1,6 +1,6 @@
 import importlib.metadata
 import shutil
-from os.path import exists, join, isfile, basename
+from os.path import join, isfile, basename
 from pathlib import Path
 from tarfile import is_tarfile
 from urllib.parse import urlparse
@@ -33,55 +33,7 @@ class RecipeContext:
         """
 
         self.configuration = configuration
-
-        self.build_context = BuildContext(
-            recipe_path=path,
-            configuration=self.configuration
-        )
-
-        if not exists(path):
-            raise Exception(f"Recipe not found: '{path}'")
-
-        logger.debug(f"Loading package description from {path}")
-
-        early_env = self.build_context.get_environment_variables()
-        self.build_context.description.name = self._read_package_variable(self.build_context.recipe_path, "name",
-                                                                          env=early_env)
-        self.build_context.description.version = self._read_package_variable(self.build_context.recipe_path, "version",
-                                                                             env=early_env)
-        self.build_context.description.release = self._read_package_variable(self.build_context.recipe_path, "release",
-                                                                             env=early_env)
-
-        # Signal that the name, version and release have been read. Update the internal build context environment
-        self.build_context.update_environment()
-
-        env = self.build_context.get_environment_variables()
-
-        self.build_context.description.url = self._read_package_variable(self.build_context.recipe_path, "url", env=env)
-
-        self.build_context.description.licenses = self._read_package_variable(self.build_context.recipe_path,
-                                                                              "licenses", is_array=True,
-                                                                              env=env).split()
-
-        self.build_context.description.dependencies = self._read_package_variable(self.build_context.recipe_path,
-                                                                                  "dependencies", is_array=True,
-                                                                                  env=env).split()
-
-        self.build_context.description.build_dependencies = self._read_package_variable(self.build_context.recipe_path,
-                                                                                        "build_dependencies",
-                                                                                        is_array=True,
-                                                                                        env=env).split()
-
-        self.build_context.description.sources = self._read_package_variable(self.build_context.recipe_path, "sources",
-                                                                             is_array=True, env=env).split()
-
-        self.build_context.description.sha256sums = self._read_package_variable(self.build_context.recipe_path,
-                                                                                "sha256sums", is_array=True,
-                                                                                env=env).split()
-
-        self.build_context.description.available_options = self._read_package_variable(self.build_context.recipe_path,
-                                                                                       "package_options", is_array=True,
-                                                                                       env=env).split()
+        self.build_context = BuildContext.create_from_recipe(configuration, path)
 
     def create_package(self):
         """
@@ -173,27 +125,6 @@ class RecipeContext:
         Get the path where the recipe is located.
         """
         return Path(self.build_context.recipe_path).parent
-
-    def _read_package_variable(self, path: Path, variable: str, env: dict[str, str] | None = None,
-                               is_array: bool = False) -> str:
-        var_ref = f"${{{variable}[@]}}" if is_array else f"${{{variable}}}"
-
-        command = f'''
-            source "{str(path)}"
-            if declare -f {variable} >/dev/null && declare -p {variable} >/dev/null; then
-                echo "Error: both a variable and a function named '{variable}' are defined" >&2
-                exit 1
-            elif declare -f {variable} >/dev/null; then
-                {variable}
-            elif declare -p {variable} >/dev/null; then
-                printf '%s\\n' {var_ref}
-            else
-                echo "Error: neither a variable nor a function named '{variable}' is defined" >&2
-                exit 1
-            fi
-        '''
-
-        return ShellCommand.exec_get_value(configuration=self.configuration, command=command, environment=env)
 
     def _call_script_function(self, function_name: str, working_dir: Path, pre_script: str | None = None,
                               post_script: str | None = None, print_output: bool = True, use_fakeroot: bool = False):

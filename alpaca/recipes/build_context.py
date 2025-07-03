@@ -8,9 +8,13 @@ from shutil import rmtree
 from typing import Self
 
 from alpaca.common.logging import logger
+from alpaca.common.shell_command import ShellCommand
 from alpaca.configuration.configuration import Configuration
 
 __version__ = importlib.metadata.version("aleya-alpaca")
+
+from alpaca.recipes.version import Version
+
 _build_context_json_name = "build_context.json"
 
 from alpaca.recipes.recipe_description import RecipeDescription
@@ -149,10 +153,6 @@ class BuildContext:
 
         return env
 
-    def update_environment(self):
-        self.workspace_path = Path(
-            join(self.configuration.package_workspace_path, self.description.name, str(self.description.version)))
-
     def write_build_context_json(self):
         build_context = {
             "configuration": {
@@ -173,6 +173,44 @@ class BuildContext:
 
         with open(build_context_path, "w") as f:
             json.dump(build_context, f, indent=4)
+
+    @classmethod
+    def create_from_recipe(cls, configuration: Configuration, recipe_path: Path | str) -> Self:
+        recipe_path = Path(recipe_path).expanduser().resolve()
+
+        if not exists(recipe_path):
+            raise Exception(f"Recipe not found: '{recipe_path}'")
+
+        logger.debug(f"Loading package description from {recipe_path}")
+
+        build_context = BuildContext(recipe_path=recipe_path, configuration=configuration)
+
+        build_context.description.name = build_context._read_recipe_variable("name")
+        build_context.description.version = Version(build_context._read_recipe_variable("version"))
+        build_context.description.release = build_context._read_recipe_variable("release")
+
+        build_context.workspace_path = Path(
+            join(configuration.package_workspace_path, build_context.description.name,
+                 str(build_context.description.version)))
+
+        build_context.description.url = build_context._read_recipe_variable("url")
+
+        build_context.description.licenses = build_context._read_recipe_variable("licenses", is_array=True).split()
+
+        build_context.description.dependencies = build_context._read_recipe_variable("dependencies",
+                                                                                     is_array=True).split()
+
+        build_context.description.build_dependencies = build_context._read_recipe_variable("build_dependencies",
+                                                                                           is_array=True).split()
+
+        build_context.description.sources = build_context._read_recipe_variable("sources", is_array=True).split()
+
+        build_context.description.sha256sums = build_context._read_recipe_variable("sha256sums", is_array=True).split()
+
+        build_context.description.available_options = build_context._read_recipe_variable("package_options",
+                                                                                          is_array=True).split()
+
+        return build_context
 
     @classmethod
     def create_from_workspace(cls, configuration: Configuration, workspace_path: Path | str) -> Self:
@@ -208,3 +246,35 @@ class BuildContext:
         build_context.description.available_options = build_context_data["configuration"]["available_options"]
 
         return build_context
+
+    def _read_recipe_variable(self, variable: str, is_array: bool = False) -> str:
+        """
+        Read or parse a variable from the recipe.
+
+        Args:
+            variable: The name of the variable to read.
+            is_array: If True, the variable is treated as an array.
+
+        Returns:
+            str: The value of the variable, or an error message if the variable is not defined.
+        """
+
+        var_ref = f"${{{variable}[@]}}" if is_array else f"${{{variable}}}"
+
+        command = f'''
+            source "{str(self.recipe_path)}"
+            if declare -f {variable} >/dev/null && declare -p {variable} >/dev/null; then
+                echo "Error: both a variable and a function named '{variable}' are defined" >&2
+                exit 1
+            elif declare -f {variable} >/dev/null; then
+                {variable}
+            elif declare -p {variable} >/dev/null; then
+                printf '%s\\n' {var_ref}
+            else
+                echo "Error: neither a variable nor a function named '{variable}' is defined" >&2
+                exit 1
+            fi
+        '''
+
+        return ShellCommand.exec_get_value(configuration=self.configuration, command=command,
+                                           environment=self.get_environment_variables())
