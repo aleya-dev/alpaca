@@ -7,15 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Install Build Dependencies') {
-            steps {
-                sh '''
-                    python3 -m pip install --upgrade pip
-                    python3 -m pip install build pytest twine requests
-                '''
-            }
-        }
-
         stage('Run Tests') {
             steps {
                 sh 'python3 -m pytest'
