@@ -29,7 +29,7 @@ dependencies = []
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["alpaca"]
+include = ["alpaca", "alpaca.*"]
 exclude = ["devpkgs"]
 
 [project.optional-dependencies]
