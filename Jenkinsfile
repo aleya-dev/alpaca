@@ -3,6 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'REF', defaultValue: 'master', description: 'Git tag or branch to build')
+        booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Publish to PyPI')
     }
 
     environment {
@@ -35,8 +36,7 @@ pipeline {
         stage('Publish to PyPI') {
             when {
                 expression {
-                    def tag = sh(script: "git tag --points-at HEAD", returnStdout: true).trim()
-                    return tag != ""
+                    params.PUBLISH
                 }
             }
             steps {
