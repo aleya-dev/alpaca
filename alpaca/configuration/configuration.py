@@ -218,7 +218,7 @@ class Configuration:
             ld_flags=environ.get("ALPACA_LD_FLAGS"),
             make_flags=environ.get("ALPACA_MAKE_FLAGS"),
             ninja_flags=environ.get("ALPACA_NINJA_FLAGS"),
-            repositories=[repo],
+            repositories=[repo] if repo else None,
             package_streams=streams
         )
 
