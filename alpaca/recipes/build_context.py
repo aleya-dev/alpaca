@@ -156,13 +156,19 @@ class BuildContext:
             "alpaca_build": "1",
             "alpaca_version": __version__,
             "target_architecture": self.configuration.target_architecture,
+            "ALPACA_TARGET_ARCHITECTURE": self.configuration.target_architecture,
             "filename_format": self.filename_format,
             "target_platform": "linux",
             "c_flags": self.configuration.c_flags,
+            "ALPACA_C_FLAGS": self.configuration.c_flags,
             "cpp_flags": self.configuration.cpp_flags,
+            "ALPACA_CXX_FLAGS": self.configuration.cpp_flags,
             "ld_flags": self.configuration.ld_flags,
+            "ALPACA_LD_FLAGS": self.configuration.ld_flags,
             "make_flags": self.configuration.make_flags,
-            "ninja_flags": self.configuration.ninja_flags
+            "ALPACA_MAKE_FLAGS": self.configuration.make_flags,
+            "ninja_flags": self.configuration.ninja_flags,
+            "ALPACA_NINJA_FLAGS": self.configuration.ninja_flags
         }
 
         if self.workspace_path:
