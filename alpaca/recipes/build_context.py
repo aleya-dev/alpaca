@@ -97,7 +97,7 @@ class BuildContext:
         """
         return Path(self.workspace_path, "package")
 
-    def write_package_hash(self):
+    def get_package_hash(self) -> str:
         """
         Compute a hash of the package script and options to determine if a prebuilt binary is available
         This can be used to skip building from source if the binary is already available
@@ -105,7 +105,6 @@ class BuildContext:
         Returns:
             str: The hash of the package script and options
         """
-
         with open(self.recipe_path, "r") as file:
             package_script = file.read()
 
@@ -118,8 +117,15 @@ class BuildContext:
         #    hash_object.update(key.encode("utf-8"))
         #    hash_object.update(str(self.options[key]).encode("utf-8"))
 
+        return hash_object.hexdigest()
+
+    def write_package_hash(self):
+        """
+        Write the .hash file (see also: get_package_hash)
+        """
+
         with open(join(self.package_directory, ".hash"), "w") as hash_file:
-            hash_file.write(hash_object.hexdigest())
+            hash_file.write(self.get_package_hash())
 
     def get_environment_variables(self) -> dict[str, str]:
         """
