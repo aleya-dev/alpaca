@@ -171,6 +171,11 @@ class BuildContext:
             "ALPACA_NINJA_FLAGS": self.configuration.ninja_flags
         }
 
+        if self.configuration.verbose_output:
+            env.update({
+                "ALPACA_VERBOSE": "1"
+            })
+
         if self.workspace_path:
             env.update({
                 "source_directory": str(self.source_directory),

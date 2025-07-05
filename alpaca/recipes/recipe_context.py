@@ -117,7 +117,7 @@ class RecipeContext:
         self._call_script_function(
             function_name="handle_package",
             working_dir=self.build_context.build_directory,
-            post_script=f'apcommand {"--verbose" if self.configuration.verbose_output else ""} deploy {self.build_context.workspace_path} {self.configuration.package_artifact_path}',
+            post_script=f'apcommand deploy {self.build_context.workspace_path} {self.configuration.package_artifact_path}',
             print_output=not self.configuration.suppress_build_output,
             use_fakeroot=True
         )
