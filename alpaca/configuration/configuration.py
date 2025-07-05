@@ -197,11 +197,29 @@ class Configuration:
         Load configuration from environment variables.
         This method should be implemented to read from environment variables.
         """
+        repo_path = environ.get("ALPACA_REPOSITORY")
+        repo = None
+
+        if repo_path is not None:
+            logger.info(f"Repository was overwritten by the environment to {repo_path}")
+            repo = RepositoryRef(repo_path)
+
+        streams = environ.get("ALPACA_STREAMS", "").split(",")
+
+        if not streams or streams == [""]:
+            streams = None
+        else:
+            logger.info(f"Streams were overwritten by the environment to {streams}")
+
         return Configuration(
             target_architecture=environ.get("ALPACA_TARGET_ARCHITECTURE"),
             c_flags=environ.get("ALPACA_C_FLAGS"),
             cpp_flags=environ.get("ALPACA_CXX_FLAGS"),
-            ld_flags=environ.get("ALPACA_LD_FLAGS")
+            ld_flags=environ.get("ALPACA_LD_FLAGS"),
+            make_flags=environ.get("ALPACA_MAKE_FLAGS"),
+            ninja_flags=environ.get("ALPACA_NINJA_FLAGS"),
+            repositories=[repo],
+            package_streams=streams
         )
 
     @classmethod
