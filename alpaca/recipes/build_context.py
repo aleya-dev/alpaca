@@ -105,10 +105,10 @@ class BuildContext:
         The output file name; based on the filename format
         """
         filename = self.filename_format
-        filename = filename.replace("${name}", self.description.name)
-        filename = filename.replace("${version}", str(self.description.version))
-        filename = filename.replace("${release}", self.description.release)
-        filename = filename.replace("${hash}", self.get_package_hash())
+        filename = filename.replace("%name%", self.description.name)
+        filename = filename.replace("%version%", str(self.description.version))
+        filename = filename.replace("%release%", self.description.release)
+        filename = filename.replace("%hash%", self.get_package_hash())
         filename += self.configuration.package_file_extension
 
         return Path(filename)
