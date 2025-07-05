@@ -211,8 +211,12 @@ class Configuration:
         else:
             logger.info(f"Streams were overwritten by the environment to {streams}")
 
+        verbose = environ.get("ALPACA_VERBOSE")
+        verbose_enabled = True if verbose and verbose == "1" else None
+
         return Configuration(
             target_architecture=environ.get("ALPACA_TARGET_ARCHITECTURE"),
+            verbose_output=verbose_enabled,
             c_flags=environ.get("ALPACA_C_FLAGS"),
             cpp_flags=environ.get("ALPACA_CXX_FLAGS"),
             ld_flags=environ.get("ALPACA_LD_FLAGS"),
