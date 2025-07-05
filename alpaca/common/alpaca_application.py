@@ -21,6 +21,10 @@ def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:
     parser.add_argument("--trace", action="store_true", help="Enable trace logging for debugging purposes "
         "This will disable the global exception handler and will cause the application to crash on unhandled errors. ")
 
+    parser.add_argument("--force-root", action="store_true",
+                        help="Force the application to run as root, even if it is not recommended. "
+                             "Use with extreme caution, as this may lead to unexpected behavior.")
+
     return parser
 
 
@@ -65,7 +69,11 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
             raise PermissionError(f"Running '{application_name}' requires root privileges. Please run as root.")
 
         if disallow_root and is_root:
-            raise PermissionError(f"Running '{application_name}' as root is not allowed. Please run as a normal user.")
+            if not args.force_root:
+                raise PermissionError(f"Running '{application_name}' as root is not allowed. Please run as a normal user.")
+            else:
+                logger.warning(f"Running '{application_name}' as root is not recommended. "
+                               "Use --force-root at your own risk.")
 
         logger.debug("This software is provided under GNU GPL v3.0")
         logger.debug("This software comes with ABSOLUTELY NO WARRANTY")
