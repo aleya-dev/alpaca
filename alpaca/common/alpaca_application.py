@@ -14,12 +14,13 @@ def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:
     parser = ArgumentParser(
         description=f"AlpaCA {application_name} - The Aleya Package Configuration Assistant ({__version__})")
 
-    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose output")
+    parser.add_argument("--verbose", "-v", action="store_true", default=None, help="Enable verbose output")
 
     parser.add_argument("--version", action="version", version=f"AlpaCA version: {__version__}")
 
-    parser.add_argument("--trace", action="store_true", help="Enable trace logging for debugging purposes "
-        "This will disable the global exception handler and will cause the application to crash on unhandled errors. ")
+    parser.add_argument("--trace", action="store_true", default=None,
+                        help="Enable trace logging for debugging purposes This will disable the global exception "
+                        "handler and will cause the application to crash on unhandled errors. ")
 
     parser.add_argument("--force-root", action="store_true",
                         help="Force the application to run as root, even if it is not recommended. "
