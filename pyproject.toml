@@ -42,3 +42,4 @@ apinstall = "alpaca.apinstall.main:main"
 apupdate = "alpaca.apupdate.main:main"
 
 [tool.setuptools_scm]
+local_scheme = "no-local-version"
