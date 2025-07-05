@@ -36,11 +36,7 @@ def _command_main(args: Namespace, configuration: Configuration):
         )
         build_context.write_package_hash()
 
-        output_archive = join(args.output_dir,
-                                f"{build_context.description.name}-{build_context.description.version}-"
-                                f"{build_context.description.release}{configuration.package_file_extension}")
-
-        compress_tar(build_context.package_directory, output_archive)
+        compress_tar(build_context.package_directory, join(args.output_dir, build_context.output_filename))
 
 
 def main():

@@ -21,10 +21,12 @@ from alpaca.recipes.recipe_description import RecipeDescription
 
 
 class BuildContext:
-    def __init__(self, recipe_path: Path | str, configuration: Configuration | None = None):
+    def __init__(self, recipe_path: Path | str, configuration: Configuration | None = None,
+                 filename_format: str | None = None):
 
         self.configuration = configuration
         self.description = RecipeDescription()
+        self.filename_format = filename_format if filename_format else "${name}-${version}-${release}"
 
         self.recipe_path = Path(recipe_path).expanduser().resolve()
         self.workspace_path: Path | None = None
@@ -97,6 +99,20 @@ class BuildContext:
         """
         return Path(self.workspace_path, "package")
 
+    @property
+    def output_filename(self) -> Path:
+        """
+        The output file name; based on the filename format
+        """
+        filename = self.filename_format
+        filename = filename.replace("${name}", self.description.name)
+        filename = filename.replace("${version}", str(self.description.version))
+        filename = filename.replace("${release}", self.description.release)
+        filename = filename.replace("${hash}", self.get_package_hash())
+        filename += self.configuration.package_file_extension
+
+        return Path(filename)
+
     def get_package_hash(self) -> str:
         """
         Compute a hash of the package script and options to determine if a prebuilt binary is available
@@ -140,6 +156,7 @@ class BuildContext:
             "alpaca_build": "1",
             "alpaca_version": __version__,
             "target_architecture": self.configuration.target_architecture,
+            "filename_format": self.filename_format,
             "target_platform": "linux",
             "c_flags": self.configuration.c_flags,
             "cpp_flags": self.configuration.cpp_flags,
@@ -180,7 +197,8 @@ class BuildContext:
                 "sha256sums": self.description.sha256sums,
                 "available_options": self.description.available_options},
             "recipe_path": str(self.recipe_path),
-            "workspace_path": str(self.workspace_path)}
+            "workspace_path": str(self.workspace_path),
+            "filename_format": self.filename_format}
 
         build_context_path = self.workspace_path / _build_context_json_name
 
@@ -188,7 +206,8 @@ class BuildContext:
             json.dump(build_context, f, indent=4)
 
     @classmethod
-    def create_from_recipe(cls, configuration: Configuration, recipe_path: Path | str) -> Self:
+    def create_from_recipe(cls, configuration: Configuration, recipe_path: Path | str,
+                           filename_format: str | None = None) -> Self:
         recipe_path = Path(recipe_path).expanduser().resolve()
 
         if not exists(recipe_path):
@@ -196,7 +215,8 @@ class BuildContext:
 
         logger.debug(f"Loading package description from {recipe_path}")
 
-        build_context = BuildContext(recipe_path=recipe_path, configuration=configuration)
+        build_context = BuildContext(recipe_path=recipe_path,
+                                     configuration=configuration, filename_format=filename_format)
 
         build_context.description.name = build_context._read_recipe_variable("name")
         build_context.description.version = Version(build_context._read_recipe_variable("version"))
@@ -236,6 +256,7 @@ class BuildContext:
             build_context_data = json.load(f)
 
         recipe_path = Path(build_context_data["recipe_path"])
+        filename_format = build_context_data["filename_format"]
 
         if not exists(recipe_path):
             raise FileNotFoundError(f"Recipe file not found: {recipe_path}")
@@ -245,7 +266,7 @@ class BuildContext:
         if not exists(workspace_path):
             raise FileNotFoundError(f"Workspace path does not exist: {workspace_path}")
 
-        build_context = cls(recipe_path, configuration)
+        build_context = cls(recipe_path=recipe_path, configuration=configuration, filename_format=filename_format)
         build_context.workspace_path = workspace_path
         build_context.description.name = build_context_data["configuration"]["name"]
         build_context.description.version = build_context_data["configuration"]["version"]

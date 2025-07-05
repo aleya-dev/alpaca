@@ -28,6 +28,10 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
     parser.add_argument("--output", "-o", type=str, help="The directory where to place the built package.")
 
+    parser.add_argument("--file-pattern", type=str,
+                        help="The file name pattern to use For example '${name}-${version}-${release}-${hash}' "
+                             "Note that you must use single quotes to ensure bash doesn't use interpolate it.")
+
     return parser
 
 
@@ -42,7 +46,7 @@ def _build_main(args: Namespace, config: Configuration):
     logger.info(f"Installing package: {recipe_path}")
     logger.debug(f"Full path: {recipe_path}")
 
-    context = RecipeContext(config, recipe_path)
+    context = RecipeContext(config, recipe_path, args.file_pattern)
     context.create_package()
 
 
