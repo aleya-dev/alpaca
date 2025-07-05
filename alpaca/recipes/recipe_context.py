@@ -112,8 +112,6 @@ class RecipeContext:
 
         logger.info("Packaging package...")
 
-        # TODO: Handle various config settings like verbose through environment variables so that when
-        # apcommand runs, it can pick it up from the environment automatically.
         self._call_script_function(
             function_name="handle_package",
             working_dir=self.build_context.build_directory,
