@@ -4,8 +4,7 @@ VENV_DIR=".venv"
 PYTHON_BIN="python3"
 INSTALL_NEEDED=0
 
-ALPACA_CONFIG="$(dirname "$(realpath "$0")")/alpaca.conf"
-export ALPACA_CONFIG
+export ALPACA_CONFIG="$(dirname "$(realpath "$0")")/alpaca.conf"
 echo "ALPACA_CONFIG set to $ALPACA_CONFIG"
 
 if [ ! -d "$VENV_DIR" ]; then
