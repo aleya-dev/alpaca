@@ -49,12 +49,16 @@ pipeline {
                 }
             }
             steps {
-                sh '''
-                    python3 -m twine upload \
-                        --username "$PYPI_USERNAME" \
-                        --password "$PYPI_PASSWORD" \
-                        dist/*
-                '''
+                script {
+                    sh '''
+                        python3 -m twine upload \
+                            --username "$PYPI_USERNAME" \
+                            --password "$PYPI_PASSWORD" \
+                            dist/*
+                    '''
+
+                    currentBuild.description = "Deployed"
+                }
             }
         }
     }
