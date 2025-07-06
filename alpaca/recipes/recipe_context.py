@@ -63,15 +63,13 @@ class RecipeContext:
             raise Exception(f"Number of sources ({len(self.build_context.description.sources)}) does not match "
                             f"number of sha256sums ({len(self.build_context.description.sha256sums)})")
 
-        if len(self.build_context.description.sources) == 0:
-            return
+        if len(self.build_context.description.sources) > 0:
+            for source, sha256sum in zip(self.build_context.description.sources, self.build_context.description.sha256sums):
+                filename = self._download_source_file(source, sha256sum)
 
-        for source, sha256sum in zip(self.build_context.description.sources, self.build_context.description.sha256sums):
-            filename = self._download_source_file(source, sha256sum)
-
-            if is_tarfile(filename):
-                logger.info(f"Extracting file {basename(filename)}...")
-                extract_tar(Path(filename), self.build_context.source_directory)
+                if is_tarfile(filename):
+                    logger.info(f"Extracting file {basename(filename)}...")
+                    extract_tar(Path(filename), self.build_context.source_directory)
 
         self._call_script_function(function_name="handle_sources", working_dir=self.build_context.source_directory)
 
