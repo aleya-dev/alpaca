@@ -196,7 +196,7 @@ class BuildContext:
 
     def write_build_context_json(self):
         build_context = {
-            "configuration": {
+            "description": {
                 "name": self.description.name,
                 "version": str(self.description.version),
                 "release": self.description.release,
@@ -278,15 +278,15 @@ class BuildContext:
 
         build_context = cls(recipe_path=recipe_path, configuration=configuration, filename_format=filename_format)
         build_context.workspace_path = workspace_path
-        build_context.description.name = build_context_data["configuration"]["name"]
-        build_context.description.version = build_context_data["configuration"]["version"]
-        build_context.description.release = build_context_data["configuration"]["release"]
-        build_context.description.url = build_context_data["configuration"]["url"]
-        build_context.description.licenses = build_context_data["configuration"]["licenses"]
-        build_context.description.dependencies = build_context_data["configuration"]["dependencies"]
-        build_context.description.build_dependencies = build_context_data["configuration"]["build_dependencies"]
-        build_context.description.sources = build_context_data["configuration"]["sources"]
-        build_context.description.sha256sums = build_context_data["configuration"]["sha256sums"]
+        build_context.description.name = build_context_data["description"]["name"]
+        build_context.description.version = build_context_data["description"]["version"]
+        build_context.description.release = build_context_data["description"]["release"]
+        build_context.description.url = build_context_data["description"]["url"]
+        build_context.description.licenses = build_context_data["description"]["licenses"]
+        build_context.description.dependencies = build_context_data["description"]["dependencies"]
+        build_context.description.build_dependencies = build_context_data["description"]["build_dependencies"]
+        build_context.description.sources = build_context_data["description"]["sources"]
+        build_context.description.sha256sums = build_context_data["description"]["sha256sums"]
 
         return build_context
 
