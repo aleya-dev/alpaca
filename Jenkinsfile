@@ -21,6 +21,15 @@ pipeline {
             }
         }
 
+        stage('Get Version') {
+            steps {
+                script {
+                    def version = sh(script: "python3 -c 'import setuptools_scm; print(setuptools_scm.get_version())'", returnStdout: true).trim()
+                    currentBuild.displayName = "#${env.BUILD_NUMBER} - ${version}"
+                }
+            }
+        }
+
         stage('Run Tests') {
             steps {
                 sh 'python3 -m pytest'
