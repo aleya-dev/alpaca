@@ -67,7 +67,10 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
         is_root = getuid() == 0
 
         if require_root and not is_root:
-            raise PermissionError(f"Running '{application_name}' requires root privileges. Please run as root.")
+            if not args.i_did_not_ask:
+                raise PermissionError(f"Running '{application_name}' requires root privileges. Please run as root.")
+            else:
+                logger.warning(f"Running '{application_name}' as non-root may not work. Use at your own risk.")
 
         if disallow_root and is_root:
             if not args.i_did_not_ask:
