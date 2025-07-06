@@ -26,7 +26,7 @@ class BuildContext:
 
         self.configuration = configuration
         self.description = RecipeDescription()
-        self.filename_format = filename_format if filename_format else "${name}-${version}-${release}"
+        self.filename_format = filename_format if filename_format else "%name%-%version%-%release%"
 
         self.recipe_path = Path(recipe_path).expanduser().resolve()
         self.workspace_path: Path | None = None
