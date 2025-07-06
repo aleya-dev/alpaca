@@ -1,6 +1,5 @@
 import io
 import subprocess
-import sys
 import threading
 from enum import Enum
 from os import environ
