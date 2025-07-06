@@ -250,9 +250,6 @@ class BuildContext:
 
         build_context.description.sha256sums = build_context._read_recipe_variable("sha256sums", is_array=True).split()
 
-        build_context.description.available_options = build_context._read_recipe_variable("package_options",
-                                                                                          is_array=True).split()
-
         return build_context
 
     @classmethod
