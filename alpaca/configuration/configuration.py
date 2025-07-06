@@ -218,6 +218,7 @@ class Configuration:
         return Configuration(
             target_architecture=environ.get("ALPACA_TARGET_ARCHITECTURE"),
             verbose_output=verbose_enabled,
+            package_artifact_path=environ.get("ALPACA_ARTIFACT_PATH"),
             c_flags=environ.get("ALPACA_C_FLAGS"),
             cpp_flags=environ.get("ALPACA_CXX_FLAGS"),
             ld_flags=environ.get("ALPACA_LD_FLAGS"),

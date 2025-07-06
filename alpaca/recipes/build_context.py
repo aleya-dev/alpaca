@@ -158,6 +158,7 @@ class BuildContext:
             "target_architecture": self.configuration.target_architecture,
             "ALPACA_TARGET_ARCHITECTURE": self.configuration.target_architecture,
             "filename_format": self.filename_format,
+            "ALPACA_ARTIFACT_PATH": self.configuration.package_artifact_path,
             "target_platform": "linux",
             "c_flags": self.configuration.c_flags,
             "ALPACA_C_FLAGS": self.configuration.c_flags,

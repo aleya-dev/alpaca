@@ -1,5 +1,6 @@
 from argparse import ArgumentParser, Namespace
-from os.path import join
+from os import makedirs
+from os.path import join, exists
 
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.logging import logger
@@ -27,7 +28,7 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 def _command_main(args: Namespace, configuration: Configuration):
     if args.command == "deploy":
-        logger.info(f"Deploying package from workspace: {args.workspace_dir}")
+        logger.info(f"Deploying package from workspace: {args.workspace_dir} to {configuration.package_artifact_path}")
 
         build_context = BuildContext.create_from_workspace(configuration, args.workspace_dir)
         write_file_info(build_context.package_directory)
@@ -36,7 +37,11 @@ def _command_main(args: Namespace, configuration: Configuration):
         )
         build_context.write_package_hash()
 
-        compress_tar(build_context.package_directory, join(args.output_dir, build_context.output_filename))
+        if not exists(configuration.package_artifact_path):
+            makedirs(configuration.package_artifact_path)
+
+        compress_tar(build_context.package_directory,
+            join(configuration.package_artifact_path, build_context.output_filename))
 
 
 def main():
