@@ -11,7 +11,6 @@ dependencies=()
 build_dependencies=()
 sources=()
 sha256sums=()
-package_options=()
 
 handle_package() {
     mkdir -p $package_directory/devpkgs/devpackage1
