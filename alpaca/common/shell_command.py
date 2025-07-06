@@ -2,6 +2,7 @@ import io
 import subprocess
 import sys
 import threading
+from enum import Enum
 from os import environ
 from pathlib import Path
 
@@ -10,6 +11,15 @@ from alpaca.configuration.configuration import Configuration
 
 _bash_executable = "/usr/bin/bash"
 _fakeroot_executable = "/usr/bin/fakeroot"
+
+
+class StreamType(Enum):
+    """
+    Enum representing the type of output stream
+    """
+
+    STDOUT = "stdout"
+    STDERR = "stderr"
 
 
 class ShellCommandResult:
@@ -21,10 +31,14 @@ class ShellCommandResult:
 
 class ShellCommand:
     @staticmethod
-    def _stream_output(stream, print_output: bool, output_string: io.StringIO, destination, ):
+    def _stream_output(stream, print_output: bool, output_string: io.StringIO, destination: StreamType):
         for line in iter(stream.readline, ""):
             if print_output:
-                print(line, end="", file=destination)
+                if destination == StreamType.STDOUT:
+                    logger.info(line.replace('\n', ''))
+                elif destination == StreamType.STDERR:
+                    logger.error(line.replace('\n', ''))
+
             output_string.write(line)
 
         stream.close()
@@ -70,17 +84,14 @@ class ShellCommand:
         stderr_str = io.StringIO()
 
         stdout_thread = threading.Thread(target=ShellCommand._stream_output,
-                                         args=(process.stdout, print_output, stdout_str, sys.stdout))
+                                         args=(process.stdout, print_output, stdout_str, StreamType.STDOUT))
         stderr_thread = threading.Thread(target=ShellCommand._stream_output,
-                                         args=(process.stderr, print_output, stderr_str, sys.stderr))
+                                         args=(process.stderr, print_output, stderr_str, StreamType.STDERR))
 
         stdout_thread.start()
         stderr_thread.start()
 
         error_code = process.wait()
-
-        sys.stdout.flush()
-        sys.stderr.flush()
 
         stdout_thread.join()
         stderr_thread.join()
