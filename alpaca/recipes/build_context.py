@@ -302,6 +302,7 @@ class BuildContext:
         var_ref = f"${{{variable}[@]}}" if is_array else f"${{{variable}}}"
 
         command = f'''
+            set -e
             source "{str(self.recipe_path)}"
             if declare -f {variable} >/dev/null && declare -p {variable} >/dev/null; then
                 echo "Error: both a variable and a function named '{variable}' are defined" >&2
