@@ -152,6 +152,8 @@ class RecipeContext:
                           print_output=print_output,
                           throw_on_error=True, use_fakeroot=use_fakeroot)
 
+        logger.verbose(f"####### End of script function {function_name}. #######")
+
     def _download_source_file(self, source: str, sha256sum: str) -> str:
         """
         Download a source file to the source directory and verify the sha256 sum.
