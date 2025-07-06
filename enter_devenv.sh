@@ -7,8 +7,6 @@ INSTALL_NEEDED=0
 export ALPACA_CONFIG="$(dirname "$(realpath "$0")")/alpaca.conf"
 echo "ALPACA_CONFIG set to $ALPACA_CONFIG"
 
-export ALPACA_REPOSITORY="local+$(dirname "$(realpath "$0")")/../aleya-recipes"
-
 if [ ! -d "$VENV_DIR" ]; then
     echo "Creating virtual environment in $VENV_DIR"
     $PYTHON_BIN -m venv "$VENV_DIR"
