@@ -183,6 +183,7 @@ class Configuration:
             repository_cache_path=config.get("general", "repository_cache_path", fallback=None),
             download_cache_path=config.get("general", "download_cache_path", fallback=None),
             target_architecture=config.get("environment", "target_architecture", fallback=None),
+            package_workspace_path=config.get("build", "workspace", fallback=None),
             c_flags=config.get("build", "c_flags", fallback=None),
             cpp_flags=config.get("build", "cpp_flags", fallback=None),
             ld_flags=config.get("build", "ld_flags", fallback=None),
