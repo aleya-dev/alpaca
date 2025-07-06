@@ -136,6 +136,7 @@ class RecipeContext:
         logger.verbose(f"Calling function {function_name} in package script from {working_dir}")
 
         ShellCommand.exec(configuration=self.configuration, command=f'''
+                set -e
                 source {self.build_context.recipe_path}
 
                 {pre_script if pre_script else ''}
