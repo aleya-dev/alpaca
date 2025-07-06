@@ -205,8 +205,7 @@ class BuildContext:
                 "dependencies": self.description.dependencies,
                 "build_dependencies": self.description.build_dependencies,
                 "sources": self.description.sources,
-                "sha256sums": self.description.sha256sums,
-                "available_options": self.description.available_options},
+                "sha256sums": self.description.sha256sums},
             "recipe_path": str(self.recipe_path),
             "workspace_path": str(self.workspace_path),
             "filename_format": self.filename_format}
@@ -288,7 +287,6 @@ class BuildContext:
         build_context.description.build_dependencies = build_context_data["configuration"]["build_dependencies"]
         build_context.description.sources = build_context_data["configuration"]["sources"]
         build_context.description.sha256sums = build_context_data["configuration"]["sha256sums"]
-        build_context.description.available_options = build_context_data["configuration"]["available_options"]
 
         return build_context
 

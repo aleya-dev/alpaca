@@ -47,7 +47,6 @@ class RecipeDescription:
         self.build_dependencies: list[str] = kwargs.get('build_dependencies', [])
         self.sources: list[str] = kwargs.get('sources', [])
         self.sha256sums: list[str] = kwargs.get('sha256sums', [])
-        self.available_options: list[str] = kwargs.get('available_options', [])
 
         if len(self.sources) != len(self.sha256sums):
             raise ValueError(
@@ -74,7 +73,6 @@ class RecipeDescription:
             file.write(f"build_dependencies = ({(' '.join(f'"{dep}"' for dep in self.build_dependencies))})\n")
             file.write(f"sources = ({(' '.join(f'"{src}"' for src in self.sources))})\n")
             file.write(f"sha256sums = ({(' '.join(f'"{sum}"' for sum in self.sha256sums))})\n")
-            file.write(f"package_options = ({(' '.join(f'"{opt}"' for opt in self.available_options))})\n")
 
         logger.debug(f"Package description written to {path}")
 
@@ -101,8 +99,7 @@ class RecipeDescription:
             dependencies=_parse_array(data["dependencies"]),
             build_dependencies=_parse_array(data["build_dependencies"]),
             sources=_parse_array(data["sources"]),
-            sha256sums=_parse_array(data["sha256sums"]),
-            available_options=_parse_array(data["package_options"]),
+            sha256sums=_parse_array(data["sha256sums"])
         )
 
     @classmethod
@@ -132,6 +129,5 @@ class RecipeDescription:
                 dependencies=build_context["dependencies"],
                 build_dependencies=build_context["build_dependencies"],
                 sources=build_context["sources"],
-                sha256sums=build_context["sha256sums"],
-                available_options=build_context["available_options"]
+                sha256sums=build_context["sha256sums"]
             )
