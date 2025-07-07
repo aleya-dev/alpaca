@@ -28,9 +28,6 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
     parser.add_argument("--output", "-o", type=str, help="The directory where to place the built package.")
 
-    parser.add_argument("--file-pattern", type=str,
-                        help="The file name pattern to use For example '%name%-%version%-%release%-%hash%'")
-
     return parser
 
 
@@ -45,8 +42,7 @@ def _build_main(args: Namespace, config: Configuration):
     logger.info(f"Installing package: {recipe_path}")
     logger.debug(f"Full path: {recipe_path}")
 
-    context = RecipeContext.create_from_recipe(configuration=config, path=recipe_path,
-        filename_format=args.file_pattern)
+    context = RecipeContext.create_from_recipe(configuration=config, path=recipe_path)
 
     context.create_package()
 

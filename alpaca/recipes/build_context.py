@@ -21,12 +21,10 @@ from alpaca.recipes.recipe_description import RecipeDescription
 
 
 class BuildContext:
-    def __init__(self, recipe_path: Path | str, configuration: Configuration | None = None,
-                 filename_format: str | None = None):
+    def __init__(self, recipe_path: Path | str, configuration: Configuration | None = None):
 
         self.configuration = configuration
         self.description = RecipeDescription()
-        self.filename_format = filename_format if filename_format else "%name%-%version%-%release%"
 
         self.recipe_path = Path(recipe_path).expanduser().resolve()
         self.workspace_path: Path | None = None
@@ -99,19 +97,6 @@ class BuildContext:
         """
         return Path(self.workspace_path, "package")
 
-    @property
-    def output_filename(self) -> Path:
-        """
-        The output file name; based on the filename format
-        """
-        filename = self.filename_format
-        filename = filename.replace("%name%", self.description.name)
-        filename = filename.replace("%version%", str(self.description.version))
-        filename = filename.replace("%release%", self.description.release)
-        filename += self.configuration.package_file_extension
-
-        return Path(filename)
-
     def get_environment_variables(self) -> dict[str, str]:
         """
         Get the environment variables for the recipe.
@@ -124,7 +109,6 @@ class BuildContext:
         env = {
             "alpaca_build": "1",
             "alpaca_version": __version__,
-            "filename_format": self.filename_format,
             "ALPACA_ARTIFACT_PATH": self.configuration.package_artifact_path,
             "target_platform": "linux",
             "c_flags": self.configuration.c_flags,
@@ -175,8 +159,7 @@ class BuildContext:
                 "sources": self.description.sources,
                 "sha256sums": self.description.sha256sums},
             "recipe_path": str(self.recipe_path),
-            "workspace_path": str(self.workspace_path),
-            "filename_format": self.filename_format}
+            "workspace_path": str(self.workspace_path)}
 
         build_context_path = self.workspace_path / _build_context_json_name
 
@@ -184,8 +167,7 @@ class BuildContext:
             json.dump(build_context, f, indent=4)
 
     @classmethod
-    def create_from_recipe(cls, configuration: Configuration, recipe_path: Path | str,
-                           filename_format: str | None = None) -> Self:
+    def create_from_recipe(cls, configuration: Configuration, recipe_path: Path | str) -> Self:
         recipe_path = Path(recipe_path).expanduser().resolve()
 
         if not exists(recipe_path):
@@ -193,8 +175,7 @@ class BuildContext:
 
         logger.debug(f"Loading package description from {recipe_path}")
 
-        build_context = BuildContext(recipe_path=recipe_path,
-                                     configuration=configuration, filename_format=filename_format)
+        build_context = BuildContext(recipe_path=recipe_path, configuration=configuration)
 
         build_context.description.name = build_context._read_recipe_variable("name")
         build_context.description.version = Version(build_context._read_recipe_variable("version"))
@@ -231,7 +212,6 @@ class BuildContext:
             build_context_data = json.load(f)
 
         recipe_path = Path(build_context_data["recipe_path"])
-        filename_format = build_context_data["filename_format"]
 
         if not exists(recipe_path):
             raise FileNotFoundError(f"Recipe file not found: {recipe_path}")
@@ -241,7 +221,7 @@ class BuildContext:
         if not exists(workspace_path):
             raise FileNotFoundError(f"Workspace path does not exist: {workspace_path}")
 
-        build_context = cls(recipe_path=recipe_path, configuration=configuration, filename_format=filename_format)
+        build_context = cls(recipe_path=recipe_path, configuration=configuration)
         build_context.workspace_path = workspace_path
         build_context.description.name = build_context_data["description"]["name"]
         build_context.description.version = build_context_data["description"]["version"]

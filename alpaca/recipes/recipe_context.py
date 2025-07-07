@@ -18,7 +18,7 @@ __version__ = importlib.metadata.version("aleya-alpaca")
 
 class RecipeContext:
     @classmethod
-    def create_from_recipe(cls, configuration: Configuration, path: Path | str, filename_format: str | None = None):
+    def create_from_recipe(cls, configuration: Configuration, path: Path | str):
         """
         Create a RecipeContext with the given configuration from a recipe file.
 
@@ -27,13 +27,12 @@ class RecipeContext:
         Args:
             configuration (Configuration): The configuration for the build process.
             path (Path | str): The path to the recipe file.
-            filename_format (str | None, optional): The format for the output filename. Defaults to None.
 
         Raises:
             Exception: If the recipe file does not exist.
         """
 
-        build_context = BuildContext.create_from_recipe(configuration, path, filename_format)
+        build_context = BuildContext.create_from_recipe(configuration, path)
         return cls(configuration, build_context)
 
     def __init__(self, configuration: Configuration, build_context: BuildContext):

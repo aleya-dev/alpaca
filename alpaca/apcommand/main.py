@@ -43,7 +43,8 @@ def _command_main(args: Namespace, configuration: Configuration):
 
         copyfile(build_context.recipe_path, join(build_context.package_directory, ".recipe"))
 
-        output_filename = join(configuration.package_artifact_path, build_context.output_filename)
+        output_filename = join(configuration.package_artifact_path,
+            f"{build_context.description.name}-{build_context.description.version}-{build_context.description.release}")
         compress_tar(build_context.package_directory, output_filename)
         write_file_hash(output_filename)
 
