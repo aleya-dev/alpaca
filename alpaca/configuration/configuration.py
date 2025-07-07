@@ -191,6 +191,7 @@ class Configuration:
         self.package_artifact_path = str(Path(self.package_artifact_path).expanduser().resolve())
         self.repository_cache_path = str(Path(self.repository_cache_path).expanduser().resolve())
 
+        self.prefix = str(Path(self.prefix).expanduser().resolve())
 
     def dump_config(self):
         """
