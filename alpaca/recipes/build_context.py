@@ -126,7 +126,6 @@ class BuildContext:
 
         hash_object = hashlib.sha256()
         hash_object.update(package_script.encode("utf-8"))
-        hash_object.update(self.configuration.target_architecture.encode("utf-8"))
 
         # Left for future use if options are needed
         # for key in sorted(self.options.keys()):
@@ -155,8 +154,6 @@ class BuildContext:
         env = {
             "alpaca_build": "1",
             "alpaca_version": __version__,
-            "target_architecture": self.configuration.target_architecture,
-            "ALPACA_TARGET_ARCHITECTURE": self.configuration.target_architecture,
             "filename_format": self.filename_format,
             "ALPACA_ARTIFACT_PATH": self.configuration.package_artifact_path,
             "target_platform": "linux",

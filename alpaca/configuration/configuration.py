@@ -31,8 +31,6 @@ class Configuration:
         self.suppress_build_output: bool | None = kwargs.get('suppress_build_output', None)
         self.show_download_progress: bool | None = kwargs.get('show_download_progress', None)
 
-        self.target_architecture: str | None = kwargs.get('target_architecture', None)
-
         self.c_flags: str | None = kwargs.get('c_flags', None)
         self.cpp_flags: str | None = kwargs.get('cpp_flags', None)
         self.ld_flags: str | None = kwargs.get('ld_flags', None)
@@ -182,7 +180,6 @@ class Configuration:
             show_download_progress=config.getboolean("general", "show_download_progress", fallback=None),
             repository_cache_path=config.get("general", "repository_cache_path", fallback=None),
             download_cache_path=config.get("general", "download_cache_path", fallback=None),
-            target_architecture=config.get("environment", "target_architecture", fallback=None),
             package_workspace_path=config.get("build", "workspace", fallback=None),
             package_artifact_path=config.get("build", "artifact_path", fallback=None),
             c_flags=config.get("build", "c_flags", fallback=None),
@@ -217,7 +214,6 @@ class Configuration:
         verbose_enabled = True if verbose and verbose == "1" else None
 
         return Configuration(
-            target_architecture=environ.get("ALPACA_TARGET_ARCHITECTURE"),
             verbose_output=verbose_enabled,
             package_artifact_path=environ.get("ALPACA_ARTIFACT_PATH"),
             c_flags=environ.get("ALPACA_C_FLAGS"),
