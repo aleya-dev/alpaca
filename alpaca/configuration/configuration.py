@@ -89,6 +89,7 @@ class Configuration:
         package_artifact_path (str | None): Path to the package artifact output directory.
 
         prefix (str | None): Installation prefix (e.g., /).
+        package_install_database_path (str | None): Path to the package installation database inside the prefix.
 
         fakeroot_executable (str | None): Path to the fakeroot executable.
         shell_executable (str | None): Path to the shell executable.
@@ -122,6 +123,7 @@ class Configuration:
         self.package_artifact_path: str | None = kwargs.get('package_artifact_path', None)
 
         self.prefix: str | None = kwargs.get('prefix', None)
+        self.package_install_database_path: str | None = kwargs.get('package_install_database_path', None)
 
         self.fakeroot_executable: str | None = kwargs.get('fakeroot_executable', None)
         self.shell_executable: str | None = kwargs.get('shell_executable', None)
@@ -192,6 +194,7 @@ class Configuration:
         self.repository_cache_path = str(Path(self.repository_cache_path).expanduser().resolve())
 
         self.prefix = str(Path(self.prefix).expanduser().resolve())
+        self.package_install_database_path = join(self.prefix, "var", "lib", "alpaca", "packages")
 
     def dump_config(self):
         """
