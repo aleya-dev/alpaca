@@ -64,10 +64,36 @@ class Configuration:
     """
     Configuration class for managing build settings and options.
 
-    Attributes
+    Attributes:
         verbose_output (bool | None): Enable verbose output.
         suppress_build_output (bool | None): Suppress build output (make, ninja, etc.).
         show_download_progress (bool | None): Show download progress bar
+
+        c_flags (str | None): C compiler flags.
+        cpp_flags (str | None): C++ compiler flags.
+        ld_flags (str | None): Linker flags.
+        make_flags (str | None): Make flags.
+        ninja_flags (str | None): Ninja flags.
+
+        repositories (list[RepositoryRef] | None): List of repositories to use.
+        package_streams (list[str] | None): List of package streams to use.
+
+        keep_build_directory (bool | None): Keep the build directory after build.
+        skip_package_check (bool | None): Skip the package check/unit testing phase.
+
+        download_cache_path (str | None): Path to the download cache directory.
+        force_download (str | None): Force redownloading files regardless of cache.
+        repository_cache_path (str | None): Path to where repositories are downloaded to.
+
+        package_workspace_path (str | None): Path to the package workspace directory to use while building the package.
+        package_delete_workspace (bool | None): Delete the workspace after build.
+        package_artifact_path (str | None): Path to the package artifact output directory.
+
+        prefix (str | None): Installation prefix (e.g., /).
+
+        fakeroot_executable (str | None): Path to the fakeroot executable.
+        shell_executable (str | None): Path to the shell executable.
+        cat_executable (str | None): Path to the cat executable.
     """
 
     def __init__(self, config_type: ConfigurationType, **kwargs) -> None:
