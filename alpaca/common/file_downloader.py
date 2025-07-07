@@ -74,4 +74,3 @@ def download_file(configuration: Configuration, url: str, destination_dir: Path,
 
     logger.info(f"Url {url} found in download cache.")
     copy(join(configuration.download_cache_path, url_hash, filename), join(destination_dir, filename))
-    return
