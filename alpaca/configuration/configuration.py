@@ -177,28 +177,20 @@ class Configuration:
 
         merged = Configuration._merge_configs(default_config, system_config, user_config, environment_config,
                                               argument_config)
+        merged.normalize()
         Configuration._dump_config_log(merged)
-        return merged.normalized()
+        return merged
 
-    def normalized(self) -> Self:
+    def normalize(self):
         """
-        Returns a normalized version of the configuration (e.g., with None values removed).
+        Returns a normalized version of the configuration
         """
-        normalized_config = Configuration(ConfigurationType.MERGED)
-
-        for key, value in self.__dict__.items():
-            if value is not None:
-                setattr(normalized_config, key, value)
-            else:
-                setattr(normalized_config, key, "")
-
         # Normalize paths since they may contain environment variables or user directories
-        normalized_config.download_cache_path = str(Path(self.download_cache_path).expanduser().resolve())
-        normalized_config.package_workspace_path = str(Path(self.package_workspace_path).expanduser().resolve())
-        normalized_config.package_artifact_path = str(Path(self.package_artifact_path).expanduser().resolve())
-        normalized_config.repository_cache_path = str(Path(self.repository_cache_path).expanduser().resolve())
+        self.download_cache_path = str(Path(self.download_cache_path).expanduser().resolve())
+        self.package_workspace_path = str(Path(self.package_workspace_path).expanduser().resolve())
+        self.package_artifact_path = str(Path(self.package_artifact_path).expanduser().resolve())
+        self.repository_cache_path = str(Path(self.repository_cache_path).expanduser().resolve())
 
-        return normalized_config
 
     def dump_config(self):
         """
