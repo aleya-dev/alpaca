@@ -331,7 +331,7 @@ class Configuration:
         max_value_len = max((len(v) for v in all_values), default=0)
 
         for config in configs:
-            if config is None:
+            if config == None:
                 continue
 
             config_type_str = _configuration_type_to_string(config.type)
