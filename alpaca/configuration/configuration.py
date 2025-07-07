@@ -15,7 +15,6 @@ _alpaca_config_env_var = "ALPACA_CONFIG"
 
 _default_fakeroot_executable = "/usr/bin/fakeroot"
 _default_shell_executable = "/usr/bin/bash"
-_default_cat_executable = "/usr/bin/cat"
 
 _default_recipe_file_extension = ".recipe.sh"
 _default_package_file_extension = ".alpaca-package.tgz"
@@ -93,7 +92,6 @@ class Configuration:
 
         fakeroot_executable (str | None): Path to the fakeroot executable.
         shell_executable (str | None): Path to the shell executable.
-        cat_executable (str | None): Path to the cat executable.
     """
 
     def __init__(self, config_type: ConfigurationType, **kwargs) -> None:
@@ -127,7 +125,6 @@ class Configuration:
 
         self.fakeroot_executable: str | None = kwargs.get('fakeroot_executable', None)
         self.shell_executable: str | None = kwargs.get('shell_executable', None)
-        self.cat_executable: str | None = kwargs.get('cat_executable', None)
 
         self.recipe_file_extension: str | None = kwargs.get('recipe_file_extension', None)
         self.package_file_extension: str | None = kwargs.get('package_file_extension', None)
@@ -316,7 +313,6 @@ class Configuration:
             prefix="/",
             fakeroot_executable=_default_fakeroot_executable,
             shell_executable=_default_shell_executable,
-            cat_executable=_default_cat_executable,
             recipe_file_extension=_default_recipe_file_extension,
             package_file_extension=_default_package_file_extension
         )
