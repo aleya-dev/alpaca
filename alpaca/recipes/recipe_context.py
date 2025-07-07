@@ -82,7 +82,8 @@ class RecipeContext:
                             f"number of sha256sums ({len(self.build_context.description.sha256sums)})")
 
         if len(self.build_context.description.sources) > 0:
-            for source, sha256sum in zip(self.build_context.description.sources, self.build_context.description.sha256sums):
+            for source, sha256sum in zip(self.build_context.description.sources,
+                                         self.build_context.description.sha256sums):
                 filename = self._download_source_file(source, sha256sum)
 
                 if is_tarfile(filename):
@@ -132,7 +133,7 @@ class RecipeContext:
             function_name="handle_package",
             working_dir=self.build_context.build_directory,
             post_script=
-                f'apcommand deploy {self.build_context.workspace_path} {self.configuration.package_artifact_path}',
+            f'apcommand deploy {self.build_context.workspace_path} {self.configuration.package_artifact_path}',
             print_output=not self.configuration.suppress_build_output,
             use_fakeroot=True
         )
