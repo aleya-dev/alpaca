@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from os import makedirs
 from os.path import join, exists
+from shutil import copyfile
 
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.hash import write_file_hash
@@ -40,6 +41,8 @@ def _command_main(args: Namespace, configuration: Configuration):
 
         if not exists(configuration.package_artifact_path):
             makedirs(configuration.package_artifact_path)
+
+        copyfile(build_context.recipe_path, join(build_context.package_directory, ".recipe"))
 
         output_filename = join(configuration.package_artifact_path, build_context.output_filename)
         compress_tar(build_context.package_directory, output_filename)
