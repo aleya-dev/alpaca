@@ -331,22 +331,22 @@ class Configuration:
         max_value_len = max((len(v) for v in all_values), default=0)
 
         for config in configs:
-            if config == None:
-                continue
-
             config_type_str = _configuration_type_to_string(config.type)
             for key, value in config.__dict__.items():
                 if value is not None:
-                    if key is "type":
-                        continue
-
-                    if isinstance(value, (list, tuple)):
-                        logger.debug(f"{key.ljust(max_key_len)} = [ {' ' * (max_value_len - 2)}({config_type_str})")
-                        for item in value:
-                            logger.debug(f"{' ' * max_key_len}   {str(item)}")
-                        logger.debug(f"{' ' * max_key_len} ]")
-                    else:
-                        logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
                     setattr(merged, key, value)
+
+        for key, value in merged.__dict__.items():
+            if value is None:
+                if key is "type":
+                    continue
+
+                if isinstance(value, (list, tuple)):
+                    logger.debug(f"{key.ljust(max_key_len)} = [ {' ' * (max_value_len - 2)}({config_type_str})")
+                    for item in value:
+                        logger.debug(f"{' ' * max_key_len}   {str(item)}")
+                    logger.debug(f"{' ' * max_key_len} ]")
+                else:
+                    logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
 
         return merged
