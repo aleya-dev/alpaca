@@ -80,6 +80,13 @@ class RepositoryRef:
         else:
             raise ValueError(f"Invalid or unsupported repository type: {self._repo_type}")
 
+    def __repr__(self) -> str:
+        """
+        Get the string representation of the repository reference for debugging
+        """
+
+        return str(self)
+
     @classmethod
     def from_string(cls, string: str) -> list[Self] | None:
         """

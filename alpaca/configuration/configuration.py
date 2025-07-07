@@ -1,5 +1,6 @@
 from argparse import Namespace
 from configparser import ConfigParser
+from enum import Enum
 from os import environ, getcwd, access, X_OK
 from os.path import exists, abspath, expandvars, expanduser, join
 from pathlib import Path
@@ -16,17 +17,62 @@ _default_fakeroot_executable = "/usr/bin/fakeroot"
 _default_shell_executable = "/usr/bin/bash"
 _default_cat_executable = "/usr/bin/cat"
 
-
 _default_recipe_file_extension = ".recipe.sh"
 _default_package_file_extension = ".alpaca-package.tgz"
+
+
+class ConfigurationType(Enum):
+    """
+    Enum representing the type of output stream
+    """
+
+    NONE = ""  # No configuration, used for empty values
+    SYSTEM = "SYSTEM"  # e.g., /etc/alpaca.conf
+    USER = "USER"  # e.g., ~/.alpaca
+    ENVCONF = "ENVCONF"  # Config file specified in the environment variable ALPACA_CONFIG
+    ARGUMENTS = "ARGUMENTS"  # Command line arguments passed to the application
+    ENVIRONMENT = "ENVIRONMENT"  # Environment variables (e.g., ALPACA_CONFIG)
+    DEFAULTS = "DEFAULTS"  # Default values for the configuration, used if no other configuration is provided
+    MERGED = "MERGED"  # Merged configuration from all sources
+
+
+def _configuration_type_to_string(config_type: ConfigurationType) -> str:
+    """
+    Convert a ConfigurationType to a string representation.
+    """
+    if config_type == ConfigurationType.NONE:
+        return "None"
+    elif config_type == ConfigurationType.SYSTEM:
+        return "System Config"
+    elif config_type == ConfigurationType.USER:
+        return "User Config"
+    elif config_type == ConfigurationType.ENVCONF:
+        return "Environment Config"
+    elif config_type == ConfigurationType.ARGUMENTS:
+        return "Arguments"
+    elif config_type == ConfigurationType.ENVIRONMENT:
+        return "Environment Variables"
+    elif config_type == ConfigurationType.DEFAULTS:
+        return "Default Value"
+    elif config_type == ConfigurationType.MERGED:
+        return "Merged"
+    else:
+        raise ValueError(f"Unknown configuration type: {config_type}")
 
 
 class Configuration:
     """
     Configuration class for managing build settings and options.
+
+    Attributes
+        verbose_output (bool | None): Enable verbose output.
+        suppress_build_output (bool | None): Suppress build output (make, ninja, etc.).
+        show_download_progress (bool | None): Show download progress bar
     """
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, config_type: ConfigurationType, **kwargs) -> None:
+        self.type = config_type
+
         self.verbose_output: bool | None = kwargs.get('verbose_output', None)
         self.suppress_build_output: bool | None = kwargs.get('suppress_build_output', None)
         self.show_download_progress: bool | None = kwargs.get('show_download_progress', None)
@@ -90,16 +136,16 @@ class Configuration:
 
             aleya_config_env_path = config_env_var
             if exists(aleya_config_env_path):
-                system_config = Configuration._create_from_config_file(aleya_config_env_path)
+                system_config = Configuration._create_from_config_file(ConfigurationType.ENVCONF, aleya_config_env_path)
             else:
                 logger.warning(f"Configuration file specified in {_alpaca_config_env_var} environment "
                                f" variable does not exist: {aleya_config_env_path}.")
 
         if system_config is None:
             logger.debug(f"Loading system config file: {_system_config_path}")
-            system_config = Configuration._create_from_config_file(_system_config_path)
+            system_config = Configuration._create_from_config_file(ConfigurationType.SYSTEM, _system_config_path)
 
-        user_config = Configuration._create_from_config_file(_user_config_path)
+        user_config = Configuration._create_from_config_file(ConfigurationType.USER, _user_config_path)
         environment_config = Configuration._create_from_environment()
         argument_config = Configuration._create_from_arguments(application_arguments)
         default_config = Configuration._create_from_defaults()
@@ -111,7 +157,7 @@ class Configuration:
         """
         Returns a normalized version of the configuration (e.g., with None values removed).
         """
-        normalized_config = Configuration()
+        normalized_config = Configuration(ConfigurationType.MERGED)
 
         for key, value in self.__dict__.items():
             if value is not None:
@@ -155,7 +201,7 @@ class Configuration:
                 raise PermissionError(f"Executable {executable} is not executable. Please check permissions.")
 
     @classmethod
-    def _create_from_config_file(cls, path: str) -> Self | None:
+    def _create_from_config_file(cls, config_type: ConfigurationType, path: str) -> Self | None:
         """
         Load configuration from a file.
         This method should be implemented to read from a specific configuration file.
@@ -165,7 +211,7 @@ class Configuration:
 
         if not exists(path):
             logger.warning(f"Configuration file does not exist: {path}")
-            return Configuration()
+            return Configuration(ConfigurationType.NONE)
 
         config = ConfigParser()
         config.read(path, encoding="utf-8")
@@ -176,6 +222,7 @@ class Configuration:
             streams = None
 
         return Configuration(
+            config_type=config_type,
             suppress_build_output=config.getboolean("general", "suppress_build_output", fallback=None),
             show_download_progress=config.getboolean("general", "show_download_progress", fallback=None),
             repository_cache_path=config.get("general", "repository_cache_path", fallback=None),
@@ -214,6 +261,7 @@ class Configuration:
         verbose_enabled = True if verbose and verbose == "1" else None
 
         return Configuration(
+            config_type=ConfigurationType.ENVIRONMENT,
             verbose_output=verbose_enabled,
             package_artifact_path=environ.get("ALPACA_ARTIFACT_PATH"),
             c_flags=environ.get("ALPACA_C_FLAGS"),
@@ -230,6 +278,7 @@ class Configuration:
         work_dir = getcwd()
 
         return Configuration(
+            config_type=ConfigurationType.DEFAULTS,
             package_workspace_path=join(work_dir, "build"),
             package_artifact_path=work_dir,
             download_cache_path="/var/lib/alpaca/downloads",
@@ -249,6 +298,7 @@ class Configuration:
         This method should be implemented to read from command line arguments.
         """
         return Configuration(
+            config_type=ConfigurationType.ARGUMENTS,
             verbose_output=getattr(args, "verbose", None),
             suppress_build_output=getattr(args, "quiet", None),
             keep_build_directory=getattr(args, "keep", None),
@@ -267,14 +317,36 @@ class Configuration:
         The last non-None value for each attribute will be used.
         """
 
-        merged = Configuration()
+        merged = Configuration(ConfigurationType.MERGED)
+
+        all_keys = [key for config in configs if config is not None for key in config.__dict__.keys()]
+        max_key_len = max((len(key) for key in all_keys), default=0)
+
+        all_values = [
+            str(value)
+            for config in configs if config is not None
+            for value in config.__dict__.values()
+            if value is not None and not isinstance(value, (list, tuple))
+        ]
+        max_value_len = max((len(v) for v in all_values), default=0)
 
         for config in configs:
             if config is None:
                 continue
 
+            config_type_str = _configuration_type_to_string(config.type)
             for key, value in config.__dict__.items():
                 if value is not None:
+                    if key is "type":
+                        continue
+
+                    if isinstance(value, (list, tuple)):
+                        logger.debug(f"{key.ljust(max_key_len)} = [ {' ' * (max_value_len - 2)}({config_type_str})")
+                        for item in value:
+                            logger.debug(f"{' ' * max_key_len}   {str(item)}")
+                        logger.debug(f"{' ' * max_key_len} ]")
+                    else:
+                        logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
                     setattr(merged, key, value)
 
         return merged
