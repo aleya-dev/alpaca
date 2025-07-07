@@ -130,6 +130,8 @@ class Configuration:
 
         system_config = None
 
+        logger.debug("Creating application configuration...")
+
         config_env_var = environ.get(_alpaca_config_env_var, None)
         if config_env_var is not None:
             logger.debug(f"Using configuration file specified in {_alpaca_config_env_var} environment variable")
@@ -150,8 +152,10 @@ class Configuration:
         argument_config = Configuration._create_from_arguments(application_arguments)
         default_config = Configuration._create_from_defaults()
 
-        return Configuration._merge_configs(default_config, system_config, user_config, environment_config,
-                                            argument_config).normalized()
+        merged = Configuration._merge_configs(default_config, system_config, user_config, environment_config,
+                                              argument_config)
+        Configuration._dump_config_log(merged)
+        return merged.normalized()
 
     def normalized(self) -> Self:
         """
@@ -319,34 +323,42 @@ class Configuration:
 
         merged = Configuration(ConfigurationType.MERGED)
 
-        all_keys = [key for config in configs if config is not None for key in config.__dict__.keys()]
+        for config in configs:
+            for key, value in config.__dict__.items():
+                if key != "type" and value is not None:
+                    setattr(merged, key, value)
+                    setattr(merged, f"{key}_origin", config.type)
+
+        return merged
+
+    @staticmethod
+    def _dump_config_log(config: "Configuration"):
+        """
+        Dump the configuration to the log.
+        """
+        logger.debug("Merged configuration:")
+
+        all_keys = config.__dict__.keys()
         max_key_len = max((len(key) for key in all_keys), default=0)
 
         all_values = [
             str(value)
-            for config in configs if config is not None
             for value in config.__dict__.values()
             if value is not None and not isinstance(value, (list, tuple))
         ]
         max_value_len = max((len(v) for v in all_values), default=0)
 
-        for config in configs:
-            config_type_str = _configuration_type_to_string(config.type)
-            for key, value in config.__dict__.items():
-                if value is not None:
-                    setattr(merged, key, value)
+        for key, value in config.__dict__.items():
+            if key == "type" or key.endswith("_origin"):
+                continue
 
-        for key, value in merged.__dict__.items():
-            if value is None:
-                if key is "type":
-                    continue
+            type_value = getattr(config, f"{key}_origin", None)
+            config_type_str = _configuration_type_to_string(type_value) if type_value else "Unknown"
 
-                if isinstance(value, (list, tuple)):
-                    logger.debug(f"{key.ljust(max_key_len)} = [ {' ' * (max_value_len - 2)}({config_type_str})")
-                    for item in value:
-                        logger.debug(f"{' ' * max_key_len}   {str(item)}")
-                    logger.debug(f"{' ' * max_key_len} ]")
-                else:
-                    logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
-
-        return merged
+            if isinstance(value, (list, tuple)):
+                logger.debug(f"{key.ljust(max_key_len)} = [ {' ' * (max_value_len - 2)}({config_type_str})")
+                for item in value:
+                    logger.debug(f"{' ' * max_key_len}   {str(item)}")
+                logger.debug(f"{' ' * max_key_len} ]")
+            else:
+                logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
