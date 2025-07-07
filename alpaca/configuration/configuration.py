@@ -371,7 +371,7 @@ class Configuration:
                 continue
 
             type_value = getattr(config, f"{key}_origin", None)
-            config_type_str = _configuration_type_to_string(type_value) if type_value else "Unknown"
+            config_type_str = _configuration_type_to_string(type_value) if type_value else "Read-only (Implied)"
 
             if value is None:
                 value = "None"
