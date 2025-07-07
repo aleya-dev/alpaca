@@ -37,7 +37,6 @@ def _command_main(args: Namespace, configuration: Configuration):
         build_context.description.write_package_description(
             build_context.package_directory / ".package_info"
         )
-        build_context.write_package_hash()
 
         if not exists(configuration.package_artifact_path):
             makedirs(configuration.package_artifact_path)
