@@ -3,6 +3,7 @@ from os import makedirs
 from os.path import join, exists
 
 from alpaca.common.alpaca_application import handle_main
+from alpaca.common.hash import write_file_hash
 from alpaca.common.logging import logger
 from alpaca.common.tar import compress_tar
 from alpaca.configuration.configuration import Configuration
@@ -40,9 +41,9 @@ def _command_main(args: Namespace, configuration: Configuration):
         if not exists(configuration.package_artifact_path):
             makedirs(configuration.package_artifact_path)
 
-        compress_tar(build_context.package_directory,
-            join(configuration.package_artifact_path, build_context.output_filename))
-
+        output_filename = join(configuration.package_artifact_path, build_context.output_filename)
+        compress_tar(build_context.package_directory, output_filename)
+        write_file_hash(output_filename)
 
 def main():
     handle_main(
