@@ -45,7 +45,9 @@ def _build_main(args: Namespace, config: Configuration):
     logger.info(f"Installing package: {recipe_path}")
     logger.debug(f"Full path: {recipe_path}")
 
-    context = RecipeContext(config, recipe_path, args.file_pattern)
+    context = RecipeContext.create_from_recipe(configuration=config, path=recipe_path,
+        filename_format=args.file_pattern)
+
     context.create_package()
 
 

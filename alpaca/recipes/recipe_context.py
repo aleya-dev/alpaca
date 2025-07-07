@@ -17,7 +17,26 @@ __version__ = importlib.metadata.version("aleya-alpaca")
 
 
 class RecipeContext:
-    def __init__(self, configuration: Configuration, path: Path | str, filename_format: str | None = None):
+    @classmethod
+    def create_from_recipe(cls, configuration: Configuration, path: Path | str, filename_format: str | None = None):
+        """
+        Create a RecipeContext with the given configuration from a recipe file.
+
+        A recipe context is used to manage the environment and variables for a specific package recipe during the
+        build and package proces
+        Args:
+            configuration (Configuration): The configuration for the build process.
+            path (Path | str): The path to the recipe file.
+            filename_format (str | None, optional): The format for the output filename. Defaults to None.
+
+        Raises:
+            Exception: If the recipe file does not exist.
+        """
+
+        build_context = BuildContext.create_from_recipe(configuration, path, filename_format)
+        return cls(configuration, build_context)
+
+    def __init__(self, configuration: Configuration, build_context: BuildContext):
         """
         Initialize the RecipeContext with the given configuration and recipe path.
 
@@ -26,15 +45,14 @@ class RecipeContext:
 
         Args:
             configuration (Configuration): The configuration for the build process.
-            path (Path | str): The path to the recipe file.
-            use_hash_filename (bool): Use the recipe hash as filename, instead of the name-version-release format
+            build_context (BuildContext): The build context for the recipe, which contains information about the
 
         Raises:
             Exception: If the recipe file does not exist.
         """
 
         self.configuration = configuration
-        self.build_context = BuildContext.create_from_recipe(configuration, path, filename_format)
+        self.build_context = build_context
 
     def create_package(self):
         """
