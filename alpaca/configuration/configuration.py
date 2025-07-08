@@ -2,7 +2,7 @@ import importlib.metadata
 from argparse import Namespace
 from configparser import ConfigParser
 from enum import Enum
-from os import environ, getcwd, access, X_OK
+from os import environ, access, X_OK
 from os.path import exists, abspath, expandvars, expanduser, join
 from pathlib import Path
 from typing import Self
@@ -288,10 +288,14 @@ class Configuration:
             config_type=config_type,
             suppress_build_output=config.getboolean("general", "suppress_build_output", fallback=None),
             show_download_progress=config.getboolean("general", "show_download_progress", fallback=None),
-            repository_cache_path=config.get("general", "repository_cache_path", fallback=None),
-            download_cache_path=config.get("general", "download_cache_path", fallback=None),
-            package_workspace_path=config.get("build", "workspace", fallback=None),
-            package_artifact_path=config.get("build", "artifact_path", fallback=None),
+            repository_cache_path=
+                Configuration._ensure_not_relative(config.get("general", "repository_cache_path", fallback=None)),
+            download_cache_path=
+                Configuration._ensure_not_relative(config.get("general", "download_cache_path", fallback=None)),
+            package_workspace_path=
+                Configuration._ensure_not_relative(config.get("build", "workspace", fallback=None)),
+            package_artifact_path=
+                Configuration._ensure_not_relative(config.get("build", "artifact_path", fallback=None)),
             c_flags=config.get("build", "c_flags", fallback=None),
             cpp_flags=config.get("build", "cpp_flags", fallback=None),
             ld_flags=config.get("build", "ld_flags", fallback=None),
@@ -326,7 +330,7 @@ class Configuration:
         return Configuration(
             config_type=ConfigurationType.ENVIRONMENT,
             verbose_output=verbose_enabled,
-            package_artifact_path=environ.get("ALPACA_ARTIFACT_PATH"),
+            package_artifact_path=Configuration._ensure_not_relative(environ.get("ALPACA_ARTIFACT_PATH")),
             c_flags=environ.get("ALPACA_C_FLAGS"),
             cpp_flags=environ.get("ALPACA_CXX_FLAGS"),
             ld_flags=environ.get("ALPACA_LD_FLAGS"),
@@ -338,12 +342,10 @@ class Configuration:
 
     @classmethod
     def _create_from_defaults(cls) -> Self:
-        work_dir = getcwd()
-
         return Configuration(
             config_type=ConfigurationType.DEFAULTS,
-            package_workspace_path=join(work_dir, "build"),
-            package_artifact_path=work_dir,
+            package_workspace_path="var/lib/alpaca/workspace",
+            package_artifact_path="/var/lib/alpaca/artifacts",
             download_cache_path="/var/lib/alpaca/downloads",
             repository_cache_path="/var/lib/alpaca/cache",
             prefix="/",
@@ -359,7 +361,7 @@ class Configuration:
         Load configuration from command line arguments.
         This method should be implemented to read from command line arguments.
         """
-        workspace_path = getattr(args, "workspace_dir", None)
+        workspace_path = Configuration._ensure_not_relative(getattr(args, "workspace_dir", None))
 
         # Hack: If the workspace path comes in through arguments, the base directory is 2 levels up from there.
         if workspace_path is not None:
@@ -374,7 +376,7 @@ class Configuration:
             skip_package_check=getattr(args, "no_check", None),
             force_download=getattr(args, "download", None),
             package_workspace_path=workspace_path,
-            package_artifact_path=getattr(args, "output", None),
+            package_artifact_path=Configuration._ensure_not_relative(getattr(args, "output", None)),
             package_delete_workspace=getattr(args, "delete_workdir", None)
         )
 
@@ -432,3 +434,26 @@ class Configuration:
                 logger.debug(f"{' ' * max_key_len} ]")
             else:
                 logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
+
+    @classmethod
+    def _ensure_not_relative(cls, path: str | None) -> str | None:
+        """
+        Ensure that the given path is not relative.
+
+        Args:
+            path (str | None): The path to check.
+
+        Returns:
+            str | None: The absolute path if it is not relative, otherwise None.
+
+        Raises:
+            ValueError: If the path is relative.
+        """
+
+        if path is None:
+            return None
+
+        if not Path(path).expanduser().is_absolute():
+            raise ValueError(f"Relative paths are not allowed in the configuration: {path}.")
+
+        return str(path)
