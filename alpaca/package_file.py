@@ -39,3 +39,20 @@ class PackageFile:
         except KeyError:
             raise FileNotFoundError("Recipe info file not found in the package.")
 
+    def read_file_info(self) -> list[FileInfo]:
+        """
+        Read the file info from the package file.
+
+        Returns:
+            list[FileInfo]: A list of FileInfo objects containing information about the files in the package.
+        """
+
+        if not self._tar:
+            self._open()
+
+        try:
+            with self._tar.extractfile(".file_info") as file:
+                file_info_string = file.read().decode("utf-8")
+                return read_file_info_from_string(file_info_string)
+        except KeyError:
+            raise FileNotFoundError("File info file not found in the package.")
