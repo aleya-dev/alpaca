@@ -6,7 +6,7 @@ from shutil import rmtree
 from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.configuration.configuration import Configuration
-from alpaca.configuration.repository_ref import RepositoryType
+from alpaca.configuration.repository_ref import RepositoryType, RepositoryRef
 from alpaca.recipe import Recipe
 from alpaca.recipe_version import RecipeVersion
 
@@ -153,11 +153,18 @@ class RepositoryCache:
             logger.info(f"Creating repository cache directory: {self.configuration.repository_cache_path}")
             makedirs(self.configuration.repository_cache_path, exist_ok=True)
 
-    def _update_git_cache(self, repo_ref):
+    def _update_git_cache(self, repo_ref: RepositoryRef):
         """
         Update the cache for a git repository.
         This method should be implemented to handle git repository updates.
+
+        Args:
+            repo_ref (RepositoryRef): The reference to the git repository to update.
         """
+
+        if repo_ref.get_type() != RepositoryType.GIT:
+            raise ValueError(f"Repository reference {repo_ref} is not a git repository.")
+
         repository_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
 
         logger.debug(f"Updating git repository cache for {repo_ref} on {repository_path}")
