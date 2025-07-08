@@ -5,8 +5,8 @@ from alpaca.common.alpaca_application import handle_main
 from alpaca.common.host_info import is_aleya_linux_host
 from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
-from alpaca.packages.package_context import PackageContext
-from alpaca.packages.package_file_info import get_total_bytes
+from alpaca.package_file import PackageFile
+from alpaca.package_file_info import get_total_bytes
 
 
 def _bytes_to_human(num):
@@ -45,15 +45,14 @@ def _install_main(args: Namespace, config: Configuration):
                          "If you intended to install a new system, please specify a the mounted "
                          "target directory using --target.")
 
-    with PackageContext(package_path) as package_context:
-        description = package_context.description
+    with PackageFile(package_path) as package_file:
+        recipe_info = package_file.read_recipe_info()
 
-        logger.info(f"Installing package '{description.name}' version '{description.version}' "
+        logger.info(f"Installing package '{recipe_info.name}' version '{recipe_info.version}' "
                     f"from '{package_path}' to target directory '{args.target}'.")
 
-        logger.info(f"Total install size: {_bytes_to_human(get_total_bytes(package_context.file_info))}")
-
-        logger.debug(f"Package hash: {package_context.hash}")
+        file_info = package_file.read_file_info()
+        logger.info(f"Total install size: {_bytes_to_human(get_total_bytes(file_info))}")
 
 def main():
     handle_main(
