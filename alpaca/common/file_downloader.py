@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 from alpaca.common.logging import logger
 from alpaca.common.progress_bar import show_progress_bar
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 
 
 def _check_download_cache_path(configuration: Configuration):

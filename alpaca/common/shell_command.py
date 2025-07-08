@@ -6,7 +6,7 @@ from os import environ
 from pathlib import Path
 
 from alpaca.common.logging import logger
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 
 _bash_executable = "/usr/bin/bash"
 _fakeroot_executable = "/usr/bin/fakeroot"

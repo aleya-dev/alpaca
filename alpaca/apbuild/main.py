@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.logging import logger
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 from alpaca.repository_cache import RepositoryCache
 
 

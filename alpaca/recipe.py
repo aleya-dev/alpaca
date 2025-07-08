@@ -5,7 +5,7 @@ from typing import Self, List
 from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.common.version import Version
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 from alpaca.recipe_info import RecipeInfo
 
 

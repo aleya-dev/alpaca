@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Self
 
 from alpaca.common.logging import logger
-from alpaca.configuration.repository_ref import RepositoryRef
+from alpaca.repository_ref import RepositoryRef
 
 _system_config_path = "/etc/alpaca.conf"
 _user_config_path = abspath(expandvars(expanduser("~/.alpaca")))

@@ -4,7 +4,7 @@ from os.path import exists
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.host_info import is_aleya_linux_host
 from alpaca.common.logging import logger
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 from alpaca.packages.package_context import PackageContext
 from alpaca.packages.package_file_info import get_total_bytes
 

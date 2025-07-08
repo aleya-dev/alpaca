@@ -7,7 +7,7 @@ __version__ = importlib.metadata.version("aleya-alpaca")
 from typing import Callable
 
 from alpaca.common.logging import enable_verbose_logging, logger
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 
 
 def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:

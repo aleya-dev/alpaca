@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from alpaca.common.alpaca_application import handle_main
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 from alpaca.repository_cache import RepositoryCache
 
 

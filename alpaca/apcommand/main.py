@@ -3,7 +3,7 @@ from os.path import join
 
 from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 from alpaca.recipe import Recipe
 from alpaca.recipe_info import RecipeInfo
 

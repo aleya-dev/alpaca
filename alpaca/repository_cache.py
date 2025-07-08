@@ -5,8 +5,8 @@ from shutil import rmtree
 
 from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
-from alpaca.configuration.configuration import Configuration
-from alpaca.configuration.repository_ref import RepositoryType, RepositoryRef
+from alpaca.configuration import Configuration
+from alpaca.repository_ref import RepositoryType, RepositoryRef
 from alpaca.recipe import Recipe
 from alpaca.recipe_version import RecipeVersion
 

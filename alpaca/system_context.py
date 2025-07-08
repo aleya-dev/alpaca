@@ -1,5 +1,5 @@
 import importlib.metadata
-from alpaca.configuration.configuration import Configuration
+from alpaca.configuration import Configuration
 
 
 __version__ = importlib.metadata.version("aleya-alpaca")
