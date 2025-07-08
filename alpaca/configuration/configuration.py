@@ -1,3 +1,4 @@
+import importlib.metadata
 from argparse import Namespace
 from configparser import ConfigParser
 from enum import Enum
@@ -18,6 +19,9 @@ _default_shell_executable = "/usr/bin/bash"
 
 _default_recipe_file_extension = ".recipe.sh"
 _default_package_file_extension = ".alpaca-package.tgz"
+
+
+__version__ = importlib.metadata.version("aleya-alpaca")
 
 
 class ConfigurationType(Enum):
@@ -223,6 +227,42 @@ class Configuration:
             if not access(executable, X_OK):
                 raise PermissionError(f"Executable {executable} is not executable. Please check permissions.")
 
+    def get_environment_variables(self) -> dict[str, str]:
+        """
+        Get the configuration environment variables for the Alpaca build process.
+        This function returns a dictionary containing the necessary environment variables for the build process,
+        including the Alpaca version, artifact path, and various flags for compilation and linking.
+        The environment variables are used to configure the build process and ensure that the correct paths and flags
+        are set for the build tools.
+
+        These variables must be expanded with the addition of those of the current context (for example the build
+        context while building a package).
+        Returns:
+            dict[str, str]: A dictionary containing the environment variables for the build process.
+        """
+        env = {
+            "alpaca_build": "1",
+            "alpaca_version": __version__,
+            "c_flags": self.c_flags,
+            "ALPACA_C_FLAGS": self.c_flags,
+            "cpp_flags": self.cpp_flags,
+            "ALPACA_CXX_FLAGS": self.cpp_flags,
+            "ld_flags": self.ld_flags,
+            "ALPACA_LD_FLAGS": self.ld_flags,
+            "make_flags": self.make_flags,
+            "ALPACA_MAKE_FLAGS": self.make_flags,
+            "ninja_flags": self.ninja_flags,
+            "ALPACA_NINJA_FLAGS": self.ninja_flags
+        }
+
+        if self.verbose_output:
+            env.update({
+                "ALPACA_VERBOSE": "1"
+            })
+
+        return env
+
+
     @classmethod
     def _create_from_config_file(cls, config_type: ConfigurationType, path: str) -> Self | None:
         """
@@ -319,6 +359,12 @@ class Configuration:
         Load configuration from command line arguments.
         This method should be implemented to read from command line arguments.
         """
+        workspace_path = getattr(args, "workspace_dir", None)
+
+        # Hack: If the workspace path comes in through arguments, the base directory is 2 levels up from there.
+        if workspace_path is not None:
+            workspace_path = join(workspace_path, "..", "..")
+
         return Configuration(
             config_type=ConfigurationType.ARGUMENTS,
             verbose_output=getattr(args, "verbose", None),
@@ -327,7 +373,7 @@ class Configuration:
             prefix=getattr(args, "target", None),
             skip_package_check=getattr(args, "no_check", None),
             force_download=getattr(args, "download", None),
-            package_workspace_path=getattr(args, "workdir", None),
+            package_workspace_path=workspace_path,
             package_artifact_path=getattr(args, "output", None),
             package_delete_workspace=getattr(args, "delete_workdir", None)
         )
@@ -349,8 +395,8 @@ class Configuration:
 
         return merged
 
-    @staticmethod
-    def _dump_config_log(config: "Configuration"):
+    @classmethod
+    def _dump_config_log(cls, config: Self):
         """
         Dump the configuration to the log.
         """

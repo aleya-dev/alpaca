@@ -1,15 +1,12 @@
 from argparse import ArgumentParser, Namespace
-from os import makedirs
 from os.path import join, exists
-from shutil import copyfile
 
+from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
-from alpaca.common.hash import write_file_hash
 from alpaca.common.logging import logger
-from alpaca.common.tar import compress_tar
 from alpaca.configuration.configuration import Configuration
-from alpaca.packages.package_file_info import write_file_info
-from alpaca.recipes.build_context import BuildContext
+from alpaca.recipe import Recipe
+from alpaca.recipe_info import RecipeInfo
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
@@ -22,7 +19,7 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     compress_package_parser.add_argument("workspace_dir", type=str,
                                          help="The path to the workspace root of the package to deploy during package.")
 
-    compress_package_parser.add_argument("output_dir", type=str,
+    compress_package_parser.add_argument("output", type=str,
                                          help="The output directory where the package will be deployed.")
 
     return parser
@@ -30,23 +27,11 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 def _command_main(args: Namespace, configuration: Configuration):
     if args.command == "deploy":
-        logger.info(f"Deploying package from workspace: {args.workspace_dir} to {configuration.package_artifact_path}")
+        recipe_info = RecipeInfo.read_json(join(args.workspace_dir, ".recipe_info"))
+        recipe = Recipe.read_from_recipe_info(configuration, recipe_info)
 
-        build_context = BuildContext.create_from_workspace(configuration, args.workspace_dir)
-        write_file_info(build_context.package_directory)
-        build_context.description.write_package_description(
-            build_context.package_directory / ".package_info"
-        )
-
-        if not exists(configuration.package_artifact_path):
-            makedirs(configuration.package_artifact_path)
-
-        copyfile(build_context.recipe_path, join(build_context.package_directory, ".recipe"))
-
-        output_filename = join(configuration.package_artifact_path,
-            f"{build_context.description.name}-{build_context.description.version}-{build_context.description.release}{configuration.package_file_extension}")
-        compress_tar(build_context.package_directory, output_filename)
-        write_file_hash(output_filename)
+        context = BuildContext(recipe)
+        context.deploy_package()
 
 def main():
     handle_main(

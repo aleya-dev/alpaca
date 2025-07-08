@@ -1,12 +1,11 @@
 from argparse import ArgumentParser, Namespace
 from alpaca.common.alpaca_application import handle_main
-from alpaca.common.repository_cache import RepositoryCache
 from alpaca.configuration.configuration import Configuration
+from alpaca.repository_cache import RepositoryCache
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--reset", "-r", action="store_true", help="Reset the repository cache and for a redownload.")
-
     return parser
 
 

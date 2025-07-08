@@ -1,10 +1,10 @@
 from argparse import ArgumentParser, Namespace
 
+from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.logging import logger
-from alpaca.common.repository_cache import RepositoryCache
 from alpaca.configuration.configuration import Configuration
-from alpaca.recipes.recipe_context import RecipeContext
+from alpaca.repository_cache import RepositoryCache
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
@@ -33,19 +33,15 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 def _build_main(args: Namespace, config: Configuration):
     repo_cache = RepositoryCache(config)
+    recipe = repo_cache.find_recipe(args.package)
 
-    recipe_path = repo_cache.find_recipe(args.package)
-
-    if recipe_path is None:
+    if recipe is None:
         raise FileNotFoundError(f"Could not find recipe for package '{args.package}'.")
 
-    logger.info(f"Installing package: {recipe_path}")
-    logger.debug(f"Full path: {recipe_path}")
+    logger.info(f"Installing package: {recipe.recipe_path}")
 
-    context = RecipeContext.create_from_recipe(configuration=config, path=recipe_path)
-
+    context = BuildContext(recipe)
     context.create_package()
-
 
 def main():
     handle_main(

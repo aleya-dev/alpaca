@@ -7,7 +7,8 @@ from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.configuration.configuration import Configuration
 from alpaca.configuration.repository_ref import RepositoryType
-from alpaca.recipes.recipe_version import RecipeVersion
+from alpaca.recipe import Recipe
+from alpaca.recipe_version import RecipeVersion
 
 
 class _PackageCandidate:
@@ -51,7 +52,7 @@ class RepositoryCache:
 
             self._update_git_cache(repo_ref)
 
-    def find_recipe(self, path: str) -> Path | None:
+    def find_recipe(self, path: str) -> Recipe | None:
         """
         Find a recipe for the given search string in the repository cache.
         This method should be implemented to search for recipes in the cache.
@@ -71,12 +72,12 @@ class RepositoryCache:
 
         if exists(path):
             logger.debug("Given package detected as absolute path.")
-            return Path(path)
+            return Recipe.create_from_recipe_file(self.configuration, path)
 
         logger.debug("Given package detected as name.")
         return self._find_recipe_by_name(path)
 
-    def _find_recipe_by_name(self, name: str) -> Path | None:
+    def _find_recipe_by_name(self, name: str) -> Recipe | None:
         parts = name.split('/')
 
         if len(parts) > 2:
@@ -142,7 +143,7 @@ class RepositoryCache:
         for candidate in candidates:
             if candidate.version == version:
                 logger.debug(f"Found recipe {candidate.path} for package '{name}' with version '{version}'")
-                return candidate.path
+                return Recipe.create_from_recipe_file(self.configuration, candidate.path)
 
         return None
 

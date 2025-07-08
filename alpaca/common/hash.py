@@ -28,6 +28,8 @@ def write_file_hash(path: str | Path):
         path (str | Path): The path to the file
     """
 
+    logger.debug(f"Writing sha256 hash for {path}")
+
     filename = basename(path)
 
     with open(f"{path}.sha256", "w") as file:
@@ -35,6 +37,8 @@ def write_file_hash(path: str | Path):
         file.write("  ")
         file.write(filename)
         file.write("\n")
+
+    logger.debug(f"Sha256 hash for {path} written to {path}.sha256")
 
 
 def check_file_hash_from_string(path: str, expected_hash: str) -> bool:

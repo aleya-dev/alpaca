@@ -1,6 +1,5 @@
 from typing import Self
-
-from alpaca.recipes.version import Version
+from alpaca.common.version import Version
 
 
 class RecipeVersion:
