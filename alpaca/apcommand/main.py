@@ -1,9 +1,8 @@
 from argparse import ArgumentParser, Namespace
-from os.path import join, exists
+from os.path import join
 
 from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
-from alpaca.common.logging import logger
 from alpaca.configuration.configuration import Configuration
 from alpaca.recipe import Recipe
 from alpaca.recipe_info import RecipeInfo
