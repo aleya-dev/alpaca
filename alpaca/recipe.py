@@ -16,7 +16,7 @@ class Recipe:
     Attributes:
         configuration (Configuration): The configuration for the build process.
         info (RecipeInfo): The recipe information containing metadata about the package.
-        recipe_path (Path | None): The path to the recipe file, if available. If loaded from a recipe info file,
+        path (Path | None): The path to the recipe file, if available. If loaded from a recipe info file,
             the recipe path will be None. Even if we were to store it, it might be a completely different system.
     """
 
@@ -31,14 +31,14 @@ class Recipe:
         """
         self.configuration = configuration
         self.info = recipe_info
-        self.recipe_path: Path = Path(recipe_path).expanduser().resolve()
+        self.path: Path = Path(recipe_path).expanduser().resolve()
 
     @property
     def recipe_directory(self) -> Path:
         """
         Get the path where the recipe is located, if available.
         """
-        return Path(self.recipe_path).parent
+        return Path(self.path).parent
 
     @classmethod
     def _read_recipe_variable(cls, configuration: Configuration, recipe_path: str | Path, variable: str,

@@ -87,7 +87,7 @@ class BuildContext:
         write_file_info(self.package_directory)
 
         copyfile(self.recipe.info.path, join(self.package_directory, ".recipe_info"))
-        copyfile(self.recipe.recipe_path, join(self.package_directory, ".recipe"))
+        copyfile(self.recipe.path, join(self.package_directory, ".recipe"))
 
         if not exists(self.recipe.configuration.package_artifact_path):
             makedirs(self.recipe.configuration.package_artifact_path)
@@ -123,7 +123,7 @@ class BuildContext:
 
     def _write_workspace_files(self):
         self.recipe.info.write_json(join(self.workspace_directory, ".recipe_info"))
-        copyfile(self.recipe.recipe_path, join(self.workspace_directory, ".recipe"))
+        copyfile(self.recipe.path, join(self.workspace_directory, ".recipe"))
 
 
     def _delete_workspace_directories(self):
@@ -286,7 +286,7 @@ class BuildContext:
 
         ShellCommand.exec(configuration=self.recipe.configuration, command=f'''
                 set -e
-                source {self.recipe.recipe_path}
+                source {self.recipe.path}
 
                 {pre_script if pre_script else ''}
 

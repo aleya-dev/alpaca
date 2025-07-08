@@ -38,7 +38,7 @@ def _build_main(args: Namespace, config: Configuration):
     if recipe is None:
         raise FileNotFoundError(f"Could not find recipe for package '{args.package}'.")
 
-    logger.info(f"Installing package: {recipe.recipe_path}")
+    logger.info(f"Installing package: {recipe.path}")
 
     context = BuildContext(recipe)
     context.create_package()
