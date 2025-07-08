@@ -473,11 +473,11 @@ class Configuration:
             type_value = getattr(config, f"{key}_origin", None)
             config_type_str = _configuration_type_to_string(type_value) if type_value else "Read-only (Implied)"
 
-            if value is None:
-                value = "None"
-
             if isinstance(value, str):
                 value = f"\"{value}\""
+
+            if value is None:
+                value = "None"
 
             if isinstance(value, (list, tuple)):
                 logger.debug(f"{key.ljust(max_key_len)} = [ {' ' * (max_value_len - 2)}({config_type_str})")
