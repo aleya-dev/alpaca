@@ -11,8 +11,8 @@ class RecipeInfo:
     A class to represent processed header description values for a recipe.
     """
 
-    def __init__(self, path: Path, **kwargs):
-        self.path = path
+    def __init__(self, path: Path | None, **kwargs):
+        self.path: Path | None = path
         self.name: str | None = kwargs.get('name', None)
         self.version: Version | None = kwargs.get('version', None)
         self.release: str | None = kwargs.get('release', None)
@@ -76,25 +76,20 @@ class RecipeInfo:
         }
 
     @classmethod
-    def read_json(cls, path: Path | str) -> Self:
+    def read_json_str(cls, json_str: str) -> Self:
         """
-        Read a recipe info from a json file.
+        Read a recipe info from a json string.
 
         Args:
-            path (Path | str): The path to the recipe info file.
+            json_str (str): The json string containing the recipe info.
 
         Returns:
             RecipeInfo: An instance of RecipeInfo with the parsed data.
         """
-        path = Path(path).expanduser().resolve()
-
-        logger.debug(f"Reading package description from {path}")
-
-        with open(path, 'r') as file:
-            data = json.loads(file.read())
+        data = json.loads(json_str)
 
         return cls(
-            path=path,
+            path=None, # There is no path to set since we are reading from a tarball
             name=data.get('name'),
             version=data.get('version'),
             release=data.get('release'),
@@ -105,3 +100,27 @@ class RecipeInfo:
             sources=data.get('sources', []),
             sha256sums=data.get('sha256sums', [])
         )
+
+    @classmethod
+    def read_json(cls, path: Path | str) -> Self:
+        """
+        Read a recipe info from a json file.
+
+        Args:
+            path (Path | str): The path to the recipe info file.
+
+        Returns:
+            RecipeInfo: An instance of RecipeInfo with the parsed data.
+        """
+        path = Path(path)
+
+        logger.debug(f"Reading package description from {path}")
+
+        if not path.exists():
+            raise FileNotFoundError(f"Recipe info file '{path}' does not exist.")
+
+        with open(path, 'r') as file:
+            json_str = file.read()
+
+        recipe_info = cls.read_json_str(json_str)
+        recipe_info.path = path
