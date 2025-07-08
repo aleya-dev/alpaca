@@ -15,6 +15,16 @@ class RepositoryType(Enum):
 
 
 class RepositoryRef:
+    """
+    A class representing a reference to a repository, either a Git repository or a local directory.
+
+    The reference string should start with "git+" for Git repositories or "local+" for local directories.
+
+    Attributes:
+        path (str): The path to the repository. Read-only.
+        type (RepositoryType): The type of the repository, either GIT or LOCAL. Read-only.
+    """
+
     def __init__(self, ref_string: str):
         """
         Initialize a RepositoryRef object from a reference string.
@@ -24,31 +34,13 @@ class RepositoryRef:
         """
 
         if ref_string.startswith("git+"):
-            self._path = ref_string[4:]
-            self._repo_type = RepositoryType.GIT
+            self.path = ref_string[4:]
+            self.type = RepositoryType.GIT
         elif ref_string.startswith("local+"):
-            self._path = str(Path(ref_string[6:]).expanduser().resolve())
-            self._repo_type = RepositoryType.LOCAL
+            self.path = str(Path(ref_string[6:]).expanduser().resolve())
+            self.type = RepositoryType.LOCAL
         else:
             raise ValueError(f"Invalid or unsupported repository type: {ref_string}")
-
-    def get_path(self) -> str:
-        """
-        Get the path to the repository as defined in the repository entry
-
-        Returns:
-            str: The path to the repository as defined in the repository entry
-        """
-
-        return self._path
-
-    def get_type(self) -> RepositoryType:
-        """
-        Get the type of the repository
-        """
-
-        return self._repo_type
-
 
     def get_hash(self):
         """
@@ -63,8 +55,8 @@ class RepositoryRef:
         """
         Get the cache path for the repository reference.
         """
-        if self._repo_type == RepositoryType.LOCAL:
-            return Path(self._path)
+        if self.type == RepositoryType.LOCAL:
+            return Path(self.path)
 
         return Path(join(cache_base_path, self.get_hash()))
 
@@ -73,12 +65,12 @@ class RepositoryRef:
         Get the string representation of the repository reference
         """
 
-        if self._repo_type == RepositoryType.GIT:
-            return f"git+{self._path}"
-        elif self._repo_type == RepositoryType.LOCAL:
-            return f"local+{self._path}"
+        if self.type == RepositoryType.GIT:
+            return f"git+{self.path}"
+        elif self.type == RepositoryType.LOCAL:
+            return f"local+{self.path}"
         else:
-            raise ValueError(f"Invalid or unsupported repository type: {self._repo_type}")
+            raise ValueError(f"Invalid or unsupported repository type: {self.type}")
 
     def __repr__(self) -> str:
         """

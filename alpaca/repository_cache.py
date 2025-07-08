@@ -30,12 +30,12 @@ class RepositoryCache:
         self._ensure_repository_cache_path_exists()
 
         for repo_ref in self.configuration.repositories:
-            if repo_ref.get_type() == RepositoryType.GIT:
+            if repo_ref.type == RepositoryType.GIT:
                 self._update_git_cache(repo_ref)
-            elif repo_ref.get_type() == RepositoryType.LOCAL:
+            elif repo_ref.type == RepositoryType.LOCAL:
                 logger.debug(f"Skipping local repository cache update for {repo_ref}")
             else:
-                raise ValueError(f"Unsupported repository type: {repo_ref.get_type()}")
+                raise ValueError(f"Unsupported repository type: {repo_ref.type}")
 
     def reset_cache(self):
         """
@@ -43,7 +43,7 @@ class RepositoryCache:
         """
 
         for repo_ref in self.configuration.repositories:
-            if repo_ref.get_type() != RepositoryType.GIT:
+            if repo_ref.type != RepositoryType.GIT:
                 continue
 
             repository_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
@@ -98,7 +98,7 @@ class RepositoryCache:
         for repo_ref in self.configuration.repositories:
             repo_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
 
-            logger.verbose(f"Repository {repo_ref.get_path()}")
+            logger.verbose(f"Repository {repo_ref.path}")
 
             for stream in self.configuration.package_streams:
                 logger.verbose(f" - Searching '{stream}'...")
@@ -162,7 +162,7 @@ class RepositoryCache:
             repo_ref (RepositoryRef): The reference to the git repository to update.
         """
 
-        if repo_ref.get_type() != RepositoryType.GIT:
+        if repo_ref.type != RepositoryType.GIT:
             raise ValueError(f"Repository reference {repo_ref} is not a git repository.")
 
         repository_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
@@ -173,7 +173,7 @@ class RepositoryCache:
             if (
                 ShellCommand.exec(
                     configuration=self.configuration,
-                    command=f"git clone {repo_ref.get_path()} {repository_path}").error_code != 0):
+                    command=f"git clone {repo_ref.path} {repository_path}").error_code != 0):
                 logger.error(f"Failed to clone repository {repository_path}")
                 raise ValueError(f"Failed to clone repository {repository_path}")
         else:
