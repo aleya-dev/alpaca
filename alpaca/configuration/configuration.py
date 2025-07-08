@@ -100,6 +100,15 @@ class Configuration:
     """
 
     def __init__(self, config_type: ConfigurationType, **kwargs) -> None:
+        """
+        Initialize the Configuration instance.
+
+        Args:
+            config_type (ConfigurationType): The type of configuration being created.
+            **kwargs: Additional keyword arguments for configuration options.
+                      Values will be set to None if not provided.
+        """
+
         self.type = config_type
 
         self.verbose_output: bool | None = kwargs.get('verbose_output', None)
@@ -191,6 +200,7 @@ class Configuration:
         """
         Returns a normalized version of the configuration
         """
+
         # Normalize paths since they may contain environment variables or user directories
         self.download_cache_path = str(Path(self.download_cache_path).expanduser().resolve())
         self.package_workspace_path = str(Path(self.package_workspace_path).expanduser().resolve())
@@ -204,7 +214,9 @@ class Configuration:
         """
         Get the effective config values
         """
+
         config = ""
+
         for key, value in self.__dict__.items():
             config += f"{key}={value}\n"
 
@@ -213,7 +225,12 @@ class Configuration:
     def ensure_executables_exist(self):
         """
         Ensure that all required executables are available in the system.
+
+        Raises:
+            FileNotFoundError: If any required executable is not found.
+            PermissionError: If any required executable is not executable.
         """
+
         executables = [
             self.fakeroot_executable,
             self.shell_executable
@@ -237,9 +254,11 @@ class Configuration:
 
         These variables must be expanded with the addition of those of the current context (for example the build
         context while building a package).
+
         Returns:
             dict[str, str]: A dictionary containing the environment variables for the build process.
         """
+
         env = {
             "alpaca_build": "1",
             "alpaca_version": __version__,
@@ -268,6 +287,14 @@ class Configuration:
         """
         Load configuration from a file.
         This method should be implemented to read from a specific configuration file.
+
+        Args:
+            config_type (ConfigurationType): The type of configuration being loaded.
+            path (str): The path to the configuration file.
+
+        Returns:
+            Configuration: Configuration instance created from the file.
+            None: If the file does not exist or is not readable.
         """
 
         logger.debug(f"Loading config file: {path}")
@@ -309,7 +336,11 @@ class Configuration:
         """
         Load configuration from environment variables.
         This method should be implemented to read from environment variables.
+
+        Returns:
+            Configuration: Configuration instance created from environment variables.
         """
+
         repo_path = environ.get("ALPACA_REPOSITORY")
         repo = None
 
@@ -342,6 +373,13 @@ class Configuration:
 
     @classmethod
     def _create_from_defaults(cls) -> Self:
+        """
+        Create a configuration instance with default values.
+
+        Returns:
+            Configuration: A configuration instance with default values, if any.
+        """
+
         return Configuration(
             config_type=ConfigurationType.DEFAULTS,
             package_workspace_path="var/lib/alpaca/workspace",
@@ -360,7 +398,14 @@ class Configuration:
         """
         Load configuration from command line arguments.
         This method should be implemented to read from command line arguments.
+
+        Args:
+            args (Namespace): Parsed command line arguments.
+
+        Returns:
+            Configuration: Configuration instance created from command line arguments.
         """
+
         workspace_path = Configuration._ensure_not_relative(getattr(args, "workspace_dir", None))
 
         # Hack: If the workspace path comes in through arguments, the base directory is 2 levels up from there.
@@ -385,6 +430,9 @@ class Configuration:
         """
         Merge multiple Config instances into one.
         The last non-None value for each attribute will be used.
+
+        Args:
+            *configs (Configuration): The configurations to merge in order of precedence.
         """
 
         merged = Configuration(ConfigurationType.MERGED)
@@ -401,7 +449,11 @@ class Configuration:
     def _dump_config_log(cls, config: Self):
         """
         Dump the configuration to the log.
+
+        Args:
+            config (Configuration): The configuration to log.
         """
+
         logger.debug("Merged configuration:")
 
         all_keys = config.__dict__.keys()
