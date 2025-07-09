@@ -73,3 +73,17 @@ class PackageFile:
             self._tar.extract(file, path=destination)
         except KeyError:
             raise FileNotFoundError(f"File '{file}' not found in the package.")
+
+    def extract(self, destination: str | Path):
+        """
+        Extract all files from the package to the destination except for the package database files.
+        """
+
+        if not self._tar:
+            self._open()
+
+        for member in self._tar.getmembers():
+            if member.name not in (".recipe", ".file_info", ".recipe_info"):
+                self._tar.extract(member, path=destination)
+            else:
+                continue
