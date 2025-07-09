@@ -26,6 +26,9 @@ def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:
                         help="Force the application to run as any user, even if it is not recommended. "
                              "Use with extreme caution, as this may lead to unexpected behavior.")
 
+    parser.add_argument("--target", "-t", type=str,
+                        help="Absolute path to the system root. Defaults to '/' if not specified.")
+
     return parser
 
 

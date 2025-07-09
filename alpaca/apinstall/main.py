@@ -11,9 +11,6 @@ from alpaca.system_context import SystemContext
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     # .alpaca-package.tgz is a configuration string; Parsed arguments are part of the configuration...
     parser.add_argument("package", type=str, help="The path to a binary package (.alpaca-package.tgz).")
-    parser.add_argument("--target", "-t", type=str,
-                        help="The target directory where the package will be installed. "
-                             "Defaults to '/' if not specified.")
 
     return parser
 
