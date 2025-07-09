@@ -382,7 +382,7 @@ class Configuration:
 
         return Configuration(
             config_type=ConfigurationType.DEFAULTS,
-            package_workspace_path="var/lib/alpaca/workspace",
+            package_workspace_path="/var/lib/alpaca/workspace",
             package_artifact_path="/var/lib/alpaca/artifacts",
             download_cache_path="/var/lib/alpaca/downloads",
             repository_cache_path="/var/lib/alpaca/cache",
