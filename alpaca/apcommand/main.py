@@ -3,6 +3,7 @@ from os.path import join
 
 from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
+from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
 from alpaca.recipe import Recipe
 from alpaca.recipe_info import RecipeInfo
@@ -25,6 +26,8 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 
 def _command_main(args: Namespace, configuration: Configuration):
+    logger.verbose(f"apcommand {args.command} {args.workspace_dir} {args.output}")
+
     if args.command == "deploy":
         configuration.package_workspace_path = join(args.workspace_dir, "..", "..")
 
