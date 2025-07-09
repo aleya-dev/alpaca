@@ -124,3 +124,5 @@ class RecipeInfo:
 
         recipe_info = cls.read_json_str(json_str)
         recipe_info.path = path
+
+        return recipe_info
