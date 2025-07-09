@@ -1,4 +1,3 @@
-
 from os import makedirs
 from os.path import exists, join, isfile, basename
 from pathlib import Path
@@ -6,10 +5,10 @@ from shutil import rmtree, copyfile, copy
 from tarfile import is_tarfile
 from urllib.parse import urlparse
 
+from alpaca.common.call_script_function import call_script_function
 from alpaca.common.file_downloader import download_file
 from alpaca.common.hash import check_file_hash_from_string, write_file_hash
 from alpaca.common.logging import logger
-from alpaca.common.shell_command import ShellCommand
 from alpaca.common.tar import extract_tar, compress_tar
 from alpaca.package_file import PackageFile
 from alpaca.package_file_info import write_file_info
@@ -24,7 +23,7 @@ class BuildContext:
     @property
     def workspace_directory(self) -> Path:
         return Path(join(self.recipe.configuration.package_workspace_path, self.recipe.info.name,
-            str(self.recipe.info.version)))
+                         str(self.recipe.info.version)))
 
     @property
     def source_directory(self) -> Path:
@@ -50,7 +49,7 @@ class BuildContext:
     @property
     def package_file_path(self) -> Path:
         return Path(join(self.recipe.configuration.package_artifact_path,
-            f"{self.recipe.info.name}-{self.recipe.info.version}-{self.recipe.info.release}{self.recipe.configuration.package_file_extension}"))
+                         f"{self.recipe.info.name}-{self.recipe.info.version}-{self.recipe.info.release}{self.recipe.configuration.package_file_extension}"))
 
     def create_package(self) -> PackageFile:
         """
@@ -82,7 +81,7 @@ class BuildContext:
         representing the deployed package.
         """
         logger.debug(f"Deploying package from {self.package_directory} "
-            f"to {self.recipe.configuration.package_artifact_path}")
+                     f"to {self.recipe.configuration.package_artifact_path}")
 
         write_file_info(self.package_directory)
 
@@ -125,7 +124,6 @@ class BuildContext:
         self.recipe.info.write_json(join(self.workspace_directory, ".recipe_info"))
         copyfile(self.recipe.path, join(self.workspace_directory, ".recipe"))
 
-
     def _delete_workspace_directories(self):
         """
         Clean up the workspace directories created for this recipe context.
@@ -160,7 +158,13 @@ class BuildContext:
                     logger.info(f"Extracting file {basename(filename)}...")
                     extract_tar(Path(filename), self.source_directory)
 
-        self._call_script_function(function_name="handle_sources", working_dir=self.source_directory)
+        call_script_function(
+            configuration=self.recipe.configuration,
+            recipe_path=self.recipe.path,
+            function_name="handle_sources",
+            working_dir=self.source_directory,
+            environment=self._get_environment_variables()
+        )
 
     def _handle_build(self):
         """
@@ -169,8 +173,14 @@ class BuildContext:
         """
 
         logger.info("Building package...")
-        self._call_script_function(function_name="handle_build", working_dir=self.build_directory,
-                                   print_output=not self.recipe.configuration.suppress_build_output)
+        call_script_function(
+            configuration=self.recipe.configuration,
+            recipe_path=self.recipe.path,
+            function_name="handle_build",
+            working_dir=self.build_directory,
+            environment=self._get_environment_variables(),
+            print_output=not self.recipe.configuration.suppress_build_output
+        )
 
     def _handle_check(self):
         """
@@ -188,8 +198,14 @@ class BuildContext:
             return
 
         logger.info("Checking package...")
-        self._call_script_function(function_name="handle_check", working_dir=self.build_directory,
-                                   print_output=not self.recipe.configuration.suppress_build_output)
+        call_script_function(
+            configuration=self.recipe.configuration,
+            recipe_path=self.recipe.path,
+            function_name="handle_check",
+            working_dir=self.build_directory,
+            environment=self._get_environment_variables(),
+            print_output=not self.recipe.configuration.suppress_build_output
+        )
 
     def _handle_package(self):
         """
@@ -198,10 +214,12 @@ class BuildContext:
         """
 
         logger.info("Packaging package...")
-
-        self._call_script_function(
+        call_script_function(
+            configuration=self.recipe.configuration,
+            recipe_path=self.recipe.path,
             function_name="handle_package",
             working_dir=self.build_directory,
+            environment=self._get_environment_variables(),
             post_script=
             f'apcommand deploy {self.workspace_directory} {self.recipe.configuration.package_artifact_path}',
             print_output=not self.recipe.configuration.suppress_build_output,
@@ -267,39 +285,3 @@ class BuildContext:
             raise ValueError(f"Source {source} hash mismatch. Expected {sha256sum}")
 
         return file_path
-
-    def _call_script_function(self, function_name: str, working_dir: Path, pre_script: str | None = None,
-                              post_script: str | None = None, print_output: bool = True, use_fakeroot: bool = False):
-        """
-        Call a function in the package script, if it exists. If the function does not exist, this will do nothing.
-
-        Args:
-            function_name (str): The name of the function inside the package script to call
-            working_dir (str): The working directory to execute the function in
-            pre_script (str | None, optional): Additional script to run before the function call. Defaults to None.
-            post_script (str | None, optional): Additional script to run after the function call. Defaults to None.
-            print_output (bool, optional): Whether to print the output of the function. Defaults to True.
-            use_fakeroot (bool, optional): Whether to use fakeroot for the command. Defaults to False.
-        """
-
-        logger.verbose(f"Calling function {function_name} in package script from {working_dir}")
-
-        ShellCommand.exec(configuration=self.recipe.configuration, command=f'''
-                set -e
-                source {self.recipe.path}
-
-                {pre_script if pre_script else ''}
-
-                if declare -F {function_name} >/dev/null; then
-                    {function_name};
-                else
-                    echo 'Skipping "{function_name}". Function not found.';
-                fi
-
-                {post_script if post_script else ''}
-            ''', working_directory=working_dir,
-                          environment=self._get_environment_variables(),
-                          print_output=print_output,
-                          throw_on_error=True, use_fakeroot=use_fakeroot)
-
-        logger.verbose(f"####### End of script function {function_name}. #######")
