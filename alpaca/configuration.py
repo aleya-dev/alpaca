@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Self
 
 from alpaca.common.logging import logger
+from alpaca.package_server_ref import PackageServerRef
 from alpaca.repository_ref import RepositoryRef
 
 _system_config_path = "/etc/alpaca.conf"
@@ -123,6 +124,7 @@ class Configuration:
 
         self.repositories: list[RepositoryRef] | None = kwargs.get('repositories', None)
         self.package_streams: list[str] | None = kwargs.get('package_streams', None)
+        self.package_servers: list[PackageServerRef] | None = kwargs.get('package_servers', None)
 
         self.keep_build_directory: bool | None = kwargs.get('keep_build_directory', None)
         self.skip_package_check: bool | None = kwargs.get('skip_package_check', None)
@@ -326,7 +328,9 @@ class Configuration:
             make_flags=config.get("build", "make_flags", fallback=None),
             ninja_flags=config.get("build", "ninja_flags", fallback=None),
             repositories=RepositoryRef.from_string(config.get("repository", "repositories", fallback="")),
-            package_streams=streams)
+            package_streams=streams,
+            package_servers=PackageServerRef.from_string(config.get("packages", "package_servers", fallback="")),
+        )
 
     @classmethod
     def _create_from_environment(cls) -> Self:
