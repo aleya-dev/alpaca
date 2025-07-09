@@ -85,8 +85,6 @@ class SystemContext:
             logger.info(f"- Updating {recipe_info.name} ({state.version} => {recipe_info.version})")
         else:
             logger.info(f"- Installing {recipe_info.name} ({recipe_info.version})")
-        logger.verbose(f"Source: {package_file.package_path}")
-        logger.verbose(f"Prefix: {self.configuration.prefix}")
 
         file_info = package_file.read_file_info()
         logger.info(f"Total install size: {_bytes_to_human(get_total_bytes(file_info))}")
