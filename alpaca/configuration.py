@@ -342,6 +342,9 @@ class Configuration:
             Configuration: Configuration instance created from environment variables.
         """
 
+        verbose = environ.get("ALPACA_VERBOSE")
+        verbose_enabled = True if verbose and verbose == "1" else None
+
         repo_path = environ.get("ALPACA_REPOSITORY")
         repo = None
 
@@ -350,14 +353,17 @@ class Configuration:
             repo = RepositoryRef(repo_path)
 
         streams = environ.get("ALPACA_STREAMS", "").split(",")
-
         if not streams or streams == [""]:
             streams = None
         else:
             logger.info(f"Streams were overwritten by the environment to {streams}")
 
-        verbose = environ.get("ALPACA_VERBOSE")
-        verbose_enabled = True if verbose and verbose == "1" else None
+        package_server_path = environ.get("ALPACA_PACKAGE_SERVER")
+        package_server = None
+
+        if package_server_path is not None:
+            logger.info(f"Package server was overwritten by the environment to {package_server_path}")
+            package_server = PackageServerRef(package_server_path)
 
         return Configuration(
             config_type=ConfigurationType.ENVIRONMENT,
@@ -369,7 +375,8 @@ class Configuration:
             make_flags=environ.get("ALPACA_MAKE_FLAGS"),
             ninja_flags=environ.get("ALPACA_NINJA_FLAGS"),
             repositories=[repo] if repo else None,
-            package_streams=streams
+            package_streams=streams,
+            package_servers = [package_server] if package_server else None
         )
 
     @classmethod
