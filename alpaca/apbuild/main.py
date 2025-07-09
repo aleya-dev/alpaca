@@ -42,7 +42,7 @@ def _build_main(args: Namespace, config: Configuration):
     if recipe is None:
         raise FileNotFoundError(f"Could not find recipe for package '{args.package}'.")
 
-    logger.info(f"Installing package: {recipe.path}")
+    logger.debug(f"Build recipe: {recipe.path}")
 
     dependencies = repo_cache.get_recipe_dependencies(recipe)
 
