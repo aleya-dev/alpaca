@@ -406,12 +406,6 @@ class Configuration:
             Configuration: Configuration instance created from command line arguments.
         """
 
-        workspace_path = Configuration._ensure_not_relative(getattr(args, "workspace_dir", None))
-
-        # Hack: If the workspace path comes in through arguments, the base directory is 2 levels up from there.
-        if workspace_path is not None:
-            workspace_path = join(workspace_path, "..", "..")
-
         return Configuration(
             config_type=ConfigurationType.ARGUMENTS,
             verbose_output=getattr(args, "verbose", None),
@@ -420,7 +414,6 @@ class Configuration:
             prefix=getattr(args, "target", None),
             skip_package_check=getattr(args, "no_check", None),
             force_download=getattr(args, "download", None),
-            package_workspace_path=workspace_path,
             package_artifact_path=Configuration._ensure_not_relative(getattr(args, "output", None)),
             package_delete_workspace=getattr(args, "delete_workdir", None)
         )

@@ -26,6 +26,8 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 def _command_main(args: Namespace, configuration: Configuration):
     if args.command == "deploy":
+        configuration.package_workspace_path = join(args.workspace_dir, "..", "..")
+
         recipe_info = RecipeInfo.read_json(join(args.workspace_dir, ".recipe_info"))
         recipe = Recipe.read_from_recipe_info(configuration, recipe_info)
 
