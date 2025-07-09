@@ -16,14 +16,7 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 
 def _install_main(args: Namespace, config: Configuration):
-    package_path = args.package
-
-    if not package_path.endswith(config.package_file_extension):
-        raise ValueError(
-            f"Invalid package file: {package_path}. Expected a file with extension '{config.package_file_extension}'.")
-
-    if not exists(package_path):
-        raise FileNotFoundError(f"Package file '{package_path}' does not exist.")
+    package_ref = args.package
 
     if config.prefix == '/' and not is_aleya_linux_host():
         raise ValueError("Target directory '/' is not allowed on non-Aleya Linux hosts. "
@@ -32,8 +25,11 @@ def _install_main(args: Namespace, config: Configuration):
 
     system = SystemContext(config)
 
-    with PackageFile(package_path) as package_file:
-        system.install_package(package_file)
+    if exists(package_ref):
+        with PackageFile(package_ref) as package_file:
+            system.install_package(package_file)
+    else:
+        system.install_package_by_name(package_ref)
 
 def main():
     handle_main(

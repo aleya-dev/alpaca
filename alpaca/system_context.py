@@ -1,13 +1,18 @@
 from os import makedirs
 from os.path import join, exists
+from pathlib import Path
 
 from alpaca.common.confirmation import ask_user_confirmation
+from alpaca.common.file_downloader import download_file
+from alpaca.common.hash import check_file_hash_from_file
 from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
 from alpaca.package_file import PackageFile
 from alpaca.package_file_info import get_total_bytes
+from alpaca.package_server_ref import PackageServerType
 from alpaca.recipe import Recipe
 from alpaca.recipe_info import RecipeInfo
+from alpaca.repository_cache import RepositoryCache
 
 
 def _bytes_to_human(num):
@@ -24,6 +29,49 @@ def _bytes_to_human(num):
 class SystemContext:
     def __init__(self, configuration: Configuration):
         self.configuration = configuration
+
+    def install_package_by_name(self, name: str, ask_confirmation: bool = True):
+        cache = RepositoryCache(self.configuration)
+        recipe = cache.find_recipe(name)
+
+        if not recipe:
+            logger.error(f"Recipe {name} not found in repository cache.")
+            return
+
+        for package_server in self.configuration.package_servers:
+            if package_server.type == PackageServerType.LOCAL:
+                package_file = join(package_server.path, recipe.info.name,
+                                f"{recipe.info.name}-{recipe.info.version}-{recipe.info.release}.alpaca-package.tgz")
+
+                if not exists(package_file):
+                    continue
+
+                check_file_hash_from_file(package_file)
+
+                with PackageFile(package_file) as package_file:
+                    self.install_package(package_file, ask_confirmation=ask_confirmation)
+
+                return
+            elif package_server.type == PackageServerType.WEB:
+                url = f"{package_server.path}/core/{recipe.info.name}/{recipe.info.name}-{recipe.info.version}-{recipe.info.release}.alpaca-package.tgz"
+
+                download_file(self.configuration, url, Path(self.configuration.download_cache_path),
+                              show_progress=self.configuration.show_download_progress)
+                download_file(self.configuration, f"{url}.sha256", Path(self.configuration.download_cache_path),
+                              show_progress=self.configuration.show_download_progress)
+
+                download_path = join(self.configuration.download_cache_path,
+                                     f"{recipe.info.name}-{recipe.info.version}-{recipe.info.release}.alpaca-package.tgz")
+                check_file_hash_from_file(download_path)
+
+                with PackageFile(download_path) as package_file:
+                    self.install_package(package_file, ask_confirmation=ask_confirmation)
+
+                # TODO: Delete the downloaded package file after installation
+
+                return
+
+        raise ValueError(f"Package {recipe.info.name} not found in any package server. It must be built from source.")
 
     def install_package(self, package_file: PackageFile, ask_confirmation: bool = True):
         recipe_info = package_file.read_recipe_info()
