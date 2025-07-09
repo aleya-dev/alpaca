@@ -5,6 +5,7 @@ from alpaca.common.alpaca_application import handle_main
 from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
 from alpaca.repository_cache import RepositoryCache
+from alpaca.system_context import SystemContext
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
@@ -39,6 +40,16 @@ def _build_main(args: Namespace, config: Configuration):
         raise FileNotFoundError(f"Could not find recipe for package '{args.package}'.")
 
     logger.info(f"Installing package: {recipe.path}")
+
+    dependencies = repo_cache.get_recipe_dependencies(recipe)
+
+    context = SystemContext(config)
+
+    if not context.are_all_installed(dependencies):
+        raise RuntimeError(
+            "Cannot build package because not all dependencies are installed. "
+            "Please install the required dependencies first."
+        )
 
     context = BuildContext(recipe)
     context.create_package()

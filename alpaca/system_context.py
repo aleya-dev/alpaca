@@ -6,6 +6,7 @@ from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
 from alpaca.package_file import PackageFile
 from alpaca.package_file_info import get_total_bytes
+from alpaca.recipe import Recipe
 from alpaca.recipe_info import RecipeInfo
 
 
@@ -71,3 +72,18 @@ class SystemContext:
             return None
 
         return RecipeInfo.read_json(recipe_info_path)
+
+    def are_all_installed(self, dependencies: list[Recipe]) -> bool:
+        for dependency in dependencies:
+            installed = self.get_install_state(dependency.info.name)
+
+            if not installed:
+                logger.error(f"Required dependency {dependency.info.name}/{dependency.info.version}-{dependency.info.release} is not installed.")
+                return False
+
+            if installed.version != dependency.info.version or installed.release != dependency.info.release:
+                logger.error(f"Dependency {dependency.info.name} is installed with version {installed.version}-{installed.release}, "
+                             f"but recipe requires version {dependency.info.version}-{dependency.info.release}.")
+                return False
+
+        return True

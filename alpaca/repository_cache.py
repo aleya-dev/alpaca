@@ -148,6 +148,41 @@ class RepositoryCache:
         return None
 
 
+    def get_recipe_dependencies(self, recipe: Recipe) -> list[Recipe]:
+        """
+        Get the dependencies of a recipe recursively
+
+        Args:
+            recipe (Recipe): The recipe for which to get dependencies.
+
+        Returns:
+            list[Recipe]: A list of recipes that are dependencies of the given recipe.
+        """
+
+        dependencies = []
+
+        for dependency_name in recipe.info.dependencies:
+            dependency_recipe = self.find_recipe(dependency_name)
+
+            if dependency_recipe is None:
+                raise FileNotFoundError(
+                    f"Dependency '{dependency_name}' not found for recipe '{recipe.info.name}'. "
+                    "Please ensure the dependency is available in your repositories."
+                )
+
+            dependencies.append(dependency_recipe)
+            dependencies.extend(self.get_recipe_dependencies(dependency_recipe))
+
+        # Remove all duplicate entries without changing the order. A duplicate can be found by .info.name
+        seen = set()
+        dependencies = [x for x in dependencies if not (x.info.name in seen or seen.add(x.info.name))]
+
+        logger.debug(f"Found {len(dependencies)} dependencies for recipe '{recipe.info.name}'")
+
+        return dependencies
+
+
+
     def _ensure_repository_cache_path_exists(self):
         if not exists(self.configuration.repository_cache_path):
             logger.info(f"Creating repository cache directory: {self.configuration.repository_cache_path}")
