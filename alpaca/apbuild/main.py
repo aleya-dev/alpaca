@@ -24,9 +24,6 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--delete-workdir", "-d", action="store_true",
                         help="Delete the working directory automatically if it exists")
 
-    parser.add_argument("--download", action="store_true",
-                        help="Force redownloading all files regardless of download cache.")
-
     parser.add_argument("--output", "-o", type=str, help="The directory where to place the built package.")
 
     return parser
