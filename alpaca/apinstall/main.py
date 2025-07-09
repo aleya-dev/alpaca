@@ -3,21 +3,9 @@ from os.path import exists
 
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.host_info import is_aleya_linux_host
-from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
 from alpaca.package_file import PackageFile
-from alpaca.package_file_info import get_total_bytes
-
-
-def _bytes_to_human(num):
-    for unit in ("", "Ki", "Mi", "Gi"):
-
-        if abs(num) < 1024.0:
-            return f"{num:3.1f}{unit}B"
-
-        num /= 1024.0
-
-    return f"{num:.1f}TiB"
+from alpaca.system_context import SystemContext
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
@@ -45,14 +33,10 @@ def _install_main(args: Namespace, config: Configuration):
                          "If you intended to install a new system, please specify a the mounted "
                          "target directory using --target.")
 
+    system = SystemContext(config)
+
     with PackageFile(package_path) as package_file:
-        recipe_info = package_file.read_recipe_info()
-
-        logger.info(f"Installing package '{recipe_info.name}' version '{recipe_info.version}' "
-                    f"from '{package_path}' to target directory '{args.target}'.")
-
-        file_info = package_file.read_file_info()
-        logger.info(f"Total install size: {_bytes_to_human(get_total_bytes(file_info))}")
+        system.install_package(package_file)
 
 def main():
     handle_main(
