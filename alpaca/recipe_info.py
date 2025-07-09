@@ -91,7 +91,7 @@ class RecipeInfo:
         return cls(
             path=None, # There is no path to set since we are reading from a tarball
             name=data.get('name'),
-            version=data.get('version'),
+            version=Version(data.get('version')),
             release=data.get('release'),
             url=data.get('url'),
             licenses=data.get('licenses', []),
