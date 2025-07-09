@@ -46,17 +46,17 @@ def _configuration_type_to_string(config_type: ConfigurationType) -> str:
     if config_type == ConfigurationType.NONE:
         return "None"
     elif config_type == ConfigurationType.SYSTEM:
-        return "System Config"
+        return "System config file"
     elif config_type == ConfigurationType.USER:
-        return "User Config"
+        return "User config file"
     elif config_type == ConfigurationType.ENVCONF:
-        return "Environment Config"
+        return "EnvVar specified config file"
     elif config_type == ConfigurationType.ARGUMENTS:
         return "Arguments"
     elif config_type == ConfigurationType.ENVIRONMENT:
-        return "Environment Variables"
+        return "Environment variables"
     elif config_type == ConfigurationType.DEFAULTS:
-        return "Default Value"
+        return "Default value"
     elif config_type == ConfigurationType.MERGED:
         return "Merged"
     else:
