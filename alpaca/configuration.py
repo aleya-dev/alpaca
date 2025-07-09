@@ -202,12 +202,13 @@ class Configuration:
         """
 
         # Normalize paths since they may contain environment variables or user directories
-        self.download_cache_path = str(Path(self.download_cache_path).expanduser().resolve())
-        self.package_workspace_path = str(Path(self.package_workspace_path).expanduser().resolve())
-        self.package_artifact_path = str(Path(self.package_artifact_path).expanduser().resolve())
-        self.repository_cache_path = str(Path(self.repository_cache_path).expanduser().resolve())
+        self.download_cache_path = str(Configuration._check_path("download_cache_path", self.download_cache_path))
+        self.package_workspace_path =(
+            str(Configuration._check_path("package_workspace_path", self.package_workspace_path)))
+        self.package_artifact_path = str(Configuration._check_path("package_artifact_path", self.package_artifact_path))
+        self.repository_cache_path = str(Configuration._check_path("repository_cache_path", self.repository_cache_path))
 
-        self.prefix = str(Path(self.prefix).expanduser().resolve())
+        self.prefix = str(Configuration._check_path("prefix (--target)", self.prefix))
         self.package_install_database_path = join(self.prefix, "var", "lib", "alpaca", "packages")
 
     def dump_config(self):
@@ -315,14 +316,10 @@ class Configuration:
             config_type=config_type,
             suppress_build_output=config.getboolean("general", "suppress_build_output", fallback=None),
             show_download_progress=config.getboolean("general", "show_download_progress", fallback=None),
-            repository_cache_path=
-                Configuration._ensure_not_relative(config.get("general", "repository_cache_path", fallback=None)),
-            download_cache_path=
-                Configuration._ensure_not_relative(config.get("general", "download_cache_path", fallback=None)),
-            package_workspace_path=
-                Configuration._ensure_not_relative(config.get("build", "workspace", fallback=None)),
-            package_artifact_path=
-                Configuration._ensure_not_relative(config.get("build", "artifact_path", fallback=None)),
+            repository_cache_path=config.get("general", "repository_cache_path", fallback=None),
+            download_cache_path=config.get("general", "download_cache_path", fallback=None),
+            package_workspace_path=config.get("build", "workspace", fallback=None),
+            package_artifact_path=config.get("build", "artifact_path", fallback=None),
             c_flags=config.get("build", "c_flags", fallback=None),
             cpp_flags=config.get("build", "cpp_flags", fallback=None),
             ld_flags=config.get("build", "ld_flags", fallback=None),
@@ -361,7 +358,7 @@ class Configuration:
         return Configuration(
             config_type=ConfigurationType.ENVIRONMENT,
             verbose_output=verbose_enabled,
-            package_artifact_path=Configuration._ensure_not_relative(environ.get("ALPACA_ARTIFACT_PATH")),
+            package_artifact_path=environ.get("ALPACA_ARTIFACT_PATH"),
             c_flags=environ.get("ALPACA_C_FLAGS"),
             cpp_flags=environ.get("ALPACA_CXX_FLAGS"),
             ld_flags=environ.get("ALPACA_LD_FLAGS"),
@@ -414,7 +411,7 @@ class Configuration:
             prefix=getattr(args, "target", None),
             skip_package_check=getattr(args, "no_check", None),
             force_download=getattr(args, "download", None),
-            package_artifact_path=Configuration._ensure_not_relative(getattr(args, "output", None)),
+            package_artifact_path=getattr(args, "output", None),
             package_delete_workspace=getattr(args, "delete_workdir", None)
         )
 
@@ -481,15 +478,15 @@ class Configuration:
                 logger.debug(f"{key.ljust(max_key_len)} = {str(value).ljust(max_value_len)}({config_type_str})")
 
     @classmethod
-    def _ensure_not_relative(cls, path: str | None) -> str | None:
+    def _check_path(cls, variable_name: str, path: str | Path | None) -> Path | None:
         """
         Ensure that the given path is not relative.
 
         Args:
-            path (str | None): The path to check.
+            path (str | Path | None): The path to check. If None, it will return None.
 
         Returns:
-            str | None: The absolute path if it is not relative, otherwise None.
+            Path | None: The absolute path if valid, or None if the input was None.
 
         Raises:
             ValueError: If the path is relative.
@@ -498,7 +495,12 @@ class Configuration:
         if path is None:
             return None
 
-        if not Path(path).expanduser().is_absolute():
-            raise ValueError(f"Relative paths are not allowed in the configuration: {path}.")
+        if isinstance(path, str):
+            path = Path(path)
 
-        return str(path)
+        path = path.expanduser()
+
+        if not path.is_absolute():
+            raise ValueError(f"Relative paths are not allowed for {variable_name}: {path}.")
+
+        return path
