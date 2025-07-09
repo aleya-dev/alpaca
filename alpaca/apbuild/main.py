@@ -26,6 +26,12 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
     parser.add_argument("--output", "-o", type=str, help="The directory where to place the built package.")
 
+    parser.add_argument("--install-deps", "-i", action="store_true",
+        help="Install all dependencies of the package before building it.")
+
+    parser.add_argument("--yes", "-y", action="store_true",
+        help="Assume yes to all questions during the build process. This is useful for automated builds.")
+
     return parser
 
 
@@ -43,10 +49,14 @@ def _build_main(args: Namespace, config: Configuration):
     context = SystemContext(config)
 
     if not context.are_all_installed(dependencies):
-        raise RuntimeError(
-            "Cannot build package because not all dependencies are installed. "
-            "Please install the required dependencies first."
-        )
+        if args.install_deps:
+            logger.info("Installing dependencies from recipe infos...")
+            context.install_from_recipes(dependencies, ask_confirmation=not args.yes)
+        else:
+            raise RuntimeError(
+                "Cannot build package because not all dependencies are installed. "
+                "Please install the required dependencies first. Use --install-deps to install them automatically."
+            )
 
     context = BuildContext(recipe)
     context.create_package()

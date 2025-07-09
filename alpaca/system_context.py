@@ -109,6 +109,24 @@ class SystemContext:
 
         logger.info(f"Package {recipe_info.name} ({recipe_info.version}) installed successfully.")
 
+    def install_from_recipes(self, recipes: list[Recipe], ask_confirmation: bool = True):
+        """
+        Install a list of recipes to the system
+
+        Args:
+            recipes (list[Recipe]): The list of recipes to install.
+            ask_confirmation (bool): Whether to ask for user confirmation before installing each package.
+        """
+
+        if ask_confirmation and not ask_user_confirmation("Install packages?", default=False):
+            logger.info("Installation cancelled by user.")
+            return
+
+        for recipe in recipes:
+            logger.info(f"Installing recipe: {recipe.info.name} ({recipe.info.version}-{recipe.info.release})")
+            self.install_package_by_name(recipe.info.name, ask_confirmation=False)
+
+
     def get_install_state(self, package_name: str) -> RecipeInfo | None:
         logger.verbose(f"Checking install state for package: {package_name}")
         database_path = join(self.configuration.package_install_database_path, package_name)
