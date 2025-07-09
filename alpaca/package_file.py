@@ -56,3 +56,20 @@ class PackageFile:
                 return read_file_info_from_string(file_info_string)
         except KeyError:
             raise FileNotFoundError("File info file not found in the package.")
+
+    def extract_file(self, file: str, destination: str | Path):
+        """
+        Extract a specific file from the package to the destination.
+
+        Args:
+            file (str): The name of the file to extract.
+            destination (str | Path): The path where the file should be extracted.
+        """
+
+        if not self._tar:
+            self._open()
+
+        try:
+            self._tar.extract(file, path=destination)
+        except KeyError:
+            raise FileNotFoundError(f"File '{file}' not found in the package.")
