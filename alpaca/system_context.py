@@ -11,7 +11,7 @@ from alpaca.package_file import PackageFile
 from alpaca.package_file_info import get_total_bytes
 from alpaca.package_server_ref import PackageServerType
 from alpaca.recipe import Recipe
-from alpaca.recipe_info import RecipeInfo
+from alpaca.package_info import PackageInfo
 from alpaca.repository_cache import RepositoryCache
 
 
@@ -74,17 +74,17 @@ class SystemContext:
         raise ValueError(f"Package {recipe.info.name} not found in any package server. It must be built from source.")
 
     def install_package(self, package_file: PackageFile, ask_confirmation: bool = True):
-        recipe_info = package_file.read_recipe_info()
+        package_info = package_file.read_package_info()
 
-        state = self.get_install_state(recipe_info.name)
+        state = self.get_install_state(package_info.name)
         updating = True if state else False
 
-        if state and state.version == recipe_info.version:
-            logger.info(f"- Overwriting {recipe_info.name} ({recipe_info.version})")
+        if state and state.version == package_info.version:
+            logger.info(f"- Overwriting {package_info.name} ({package_info.version})")
         elif updating:
-            logger.info(f"- Updating {recipe_info.name} ({state.version} => {recipe_info.version})")
+            logger.info(f"- Updating {package_info.name} ({state.version} => {package_info.version})")
         else:
-            logger.info(f"- Installing {recipe_info.name} ({recipe_info.version})")
+            logger.info(f"- Installing {package_info.name} ({package_info.version})")
 
         file_info = package_file.read_file_info()
         logger.info(f"Total install size: {_bytes_to_human(get_total_bytes(file_info))}")
@@ -94,7 +94,7 @@ class SystemContext:
             logger.info("Installation cancelled by user.")
             return
 
-        database_path = join(self.configuration.package_install_database_path, recipe_info.name)
+        database_path = join(self.configuration.package_install_database_path, package_info.name)
 
         if not updating and not exists(database_path):
             logger.verbose(f"Creating database directory: {database_path}")
@@ -104,10 +104,10 @@ class SystemContext:
 
         package_file.extract_file(".recipe", database_path)
         package_file.extract_file(".file_info", database_path)
-        package_file.extract_file(".recipe_info", database_path)
+        package_file.extract_file(".package_info", database_path)
         package_file.extract(self.configuration.prefix)
 
-        logger.info(f"Package {recipe_info.name} ({recipe_info.version}) installed successfully.")
+        logger.info(f"Package {package_info.name} ({package_info.version}) installed successfully.")
 
     def install_from_recipes(self, recipes: list[Recipe], ask_confirmation: bool = True):
         """
@@ -127,15 +127,15 @@ class SystemContext:
             self.install_package_by_name(recipe.info.name, ask_confirmation=False)
 
 
-    def get_install_state(self, package_name: str) -> RecipeInfo | None:
+    def get_install_state(self, package_name: str) -> PackageInfo | None:
         logger.verbose(f"Checking install state for package: {package_name}")
         database_path = join(self.configuration.package_install_database_path, package_name)
-        recipe_info_path = join(database_path, ".recipe_info")
+        package_info_path = join(database_path, ".package_info")
 
-        if not exists(recipe_info_path):
+        if not exists(package_info_path):
             return None
 
-        return RecipeInfo.read_json(recipe_info_path)
+        return PackageInfo.read_json(package_info_path)
 
     def are_all_installed(self, dependencies: list[Recipe]) -> bool:
         for dependency in dependencies:

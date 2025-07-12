@@ -40,7 +40,7 @@ def compress_tar(directory: Path | str, archive_path: Path | str):
     files = []
     for root, _, filenames in walk(directory):
         for filename in filenames:
-            if filename not in (".recipe", ".file_info", ".recipe_info"):
+            if filename not in (".recipe", ".file_info", ".package_info"):
                 logger.verbose(f" - {join(relpath(root, directory), filename)}")
 
             files.append(join(root, filename))

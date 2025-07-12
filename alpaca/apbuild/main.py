@@ -50,7 +50,7 @@ def _build_main(args: Namespace, config: Configuration):
 
     if not context.are_all_installed(dependencies):
         if args.install_deps:
-            logger.info("Installing dependencies from recipe infos...")
+            logger.info("Installing dependencies from package infos...")
             context.install_from_recipes(dependencies, ask_confirmation=not args.yes)
         else:
             raise RuntimeError(

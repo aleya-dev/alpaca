@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Self
 
 from alpaca.package_file_info import FileInfo, read_file_info_from_string
-from alpaca.recipe_info import RecipeInfo
+from alpaca.package_info import PackageInfo
 
 
 class PackageFile:
@@ -22,22 +22,22 @@ class PackageFile:
     def _open(self):
         self._tar = tarfile_open(self.package_path, "r:gz")
 
-    def read_recipe_info(self) -> RecipeInfo:
+    def read_package_info(self) -> PackageInfo:
         """
-        Read the recipe info from the package file.
+        Read the package info from the package file.
 
         Returns:
-            str: The contents of the recipe info file.
+            str: The contents of the package info file.
         """
 
         if not self._tar:
             self._open()
 
         try:
-            with self._tar.extractfile(".recipe_info") as file:
-                return RecipeInfo.read_json_str(file.read().decode("utf-8"))
+            with self._tar.extractfile(".package_info") as file:
+                return PackageInfo.read_json_str(file.read().decode("utf-8"))
         except KeyError:
-            raise FileNotFoundError("Recipe info file not found in the package.")
+            raise FileNotFoundError("package info file not found in the package.")
 
     def read_file_info(self) -> list[FileInfo]:
         """
@@ -83,7 +83,7 @@ class PackageFile:
             self._open()
 
         for member in self._tar.getmembers():
-            if member.name not in (".recipe", ".file_info", ".recipe_info"):
+            if member.name not in (".recipe", ".file_info", ".package_info"):
                 self._tar.extract(member, path=destination)
             else:
                 continue

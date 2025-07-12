@@ -85,7 +85,7 @@ class BuildContext:
 
         write_file_info(self.package_directory)
 
-        copyfile(self.recipe.info.path, join(self.package_directory, ".recipe_info"))
+        copyfile(self.recipe.info.path, join(self.package_directory, ".package_info"))
         copyfile(self.recipe.path, join(self.package_directory, ".recipe"))
 
         if not exists(self.recipe.configuration.package_artifact_path):
@@ -121,7 +121,7 @@ class BuildContext:
         self._allow_workspace_cleanup = True
 
     def _write_workspace_files(self):
-        self.recipe.info.write_json(join(self.workspace_directory, ".recipe_info"))
+        self.recipe.info.write_json(join(self.workspace_directory, ".package_info"))
         copyfile(self.recipe.path, join(self.workspace_directory, ".recipe"))
 
     def _delete_workspace_directories(self):

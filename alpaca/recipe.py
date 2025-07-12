@@ -6,7 +6,7 @@ from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.common.version import Version
 from alpaca.configuration import Configuration
-from alpaca.recipe_info import RecipeInfo
+from alpaca.package_info import PackageInfo
 
 
 class Recipe:
@@ -15,22 +15,22 @@ class Recipe:
 
     Attributes:
         configuration (Configuration): The configuration for the build process.
-        info (RecipeInfo): The recipe information containing metadata about the package.
-        path (Path | None): The path to the recipe file, if available. If loaded from a recipe info file,
+        info (PackageInfo): The package information containing metadata about the package.
+        path (Path | None): The path to the recipe file, if available. If loaded from a package info file,
             the recipe path will be None. Even if we were to store it, it might be a completely different system.
     """
 
-    def __init__(self, configuration: Configuration, recipe_info: RecipeInfo, recipe_path: str | Path):
+    def __init__(self, configuration: Configuration, package_info: PackageInfo, recipe_path: str | Path):
         """
-        Initialize the Recipe with the given configuration and recipe information. For internal use only.
+        Initialize the Recipe with the given configuration and package information. For internal use only.
 
         Args:
             configuration (Configuration): The configuration for the build process.
-            recipe_info (RecipeInfo): The recipe information containing metadata about the package.
+            package_info (PackageInfo): The package information containing metadata about the package.
             recipe_path (str | Path | None): The path to the recipe file, if available. Defaults to None.
         """
         self.configuration = configuration
-        self.info = recipe_info
+        self.info = package_info
         self.path: Path = Path(recipe_path).expanduser().resolve()
 
     @property
@@ -88,7 +88,7 @@ class Recipe:
             recipe_path: The path to the recipe file.
 
         Returns:
-            Recipe: An instance of the Recipe class containing the recipe information.
+            Recipe: An instance of the Recipe class containing the package information.
 
         """
         if not exists(recipe_path):
@@ -127,7 +127,7 @@ class Recipe:
             configuration=configuration, recipe_path=recipe_path, environment=environment, variable="sha256sums",
             is_array=True)
 
-        recipe_info = RecipeInfo(
+        package_info = PackageInfo(
             path=recipe_path,
             name=name,
             version=version,
@@ -140,22 +140,22 @@ class Recipe:
             sha256sums=sha256sums
         )
 
-        return cls(configuration, recipe_info, recipe_path)
+        return cls(configuration, package_info, recipe_path)
 
     @classmethod
-    def read_from_recipe_info(cls, configuration: Configuration, recipe_info: RecipeInfo) -> Self:
+    def read_from_package_info(cls, configuration: Configuration, package_info: PackageInfo) -> Self:
         """
         Create a Recipe instance from a RecipeInfo object.
 
         Args:
             configuration: The Alpaca configuration.
-            recipe_info: The RecipeInfo object containing processed information about a recipe.
+            package_info: The RecipeInfo object containing processed information about a recipe.
 
         Returns:
-            Recipe: An instance of the Recipe class containing the recipe information.
+            Recipe: An instance of the Recipe class containing the package information.
         """
-        # The recipe path is a file called .recipe next to the given recipe info file
-        recipe_path = join(recipe_info.recipe_info_directory, ".recipe")
+        # The recipe path is a file called .recipe next to the given package info file
+        recipe_path = join(package_info.package_info_directory, ".recipe")
 
         logger.debug(f"Using recipe from {recipe_path}")
-        return cls(configuration, recipe_info, recipe_path)
+        return cls(configuration, package_info, recipe_path)

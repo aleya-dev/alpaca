@@ -6,7 +6,7 @@ from alpaca.common.alpaca_application import handle_main
 from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
 from alpaca.recipe import Recipe
-from alpaca.recipe_info import RecipeInfo
+from alpaca.package_info import PackageInfo
 
 
 def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
@@ -31,8 +31,8 @@ def _command_main(args: Namespace, configuration: Configuration):
     if args.command == "deploy":
         configuration.package_workspace_path = join(args.workspace_dir, "..", "..")
 
-        recipe_info = RecipeInfo.read_json(join(args.workspace_dir, ".recipe_info"))
-        recipe = Recipe.read_from_recipe_info(configuration, recipe_info)
+        package_info = PackageInfo.read_json(join(args.workspace_dir, ".package_info"))
+        recipe = Recipe.read_from_package_info(configuration, package_info)
 
         context = BuildContext(recipe)
         context.deploy_package()

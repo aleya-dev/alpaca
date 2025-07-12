@@ -6,7 +6,7 @@ from alpaca.common.logging import logger
 from alpaca.common.version import Version
 
 
-class RecipeInfo:
+class PackageInfo:
     """
     A class to represent processed header description values for a recipe.
     """
@@ -28,18 +28,18 @@ class RecipeInfo:
                 f"Number of sources ({len(self.sources)}) does not match number of sha256sums ({len(self.sha256sums)})")
 
     @property
-    def recipe_info_directory(self) -> Path:
+    def package_info_directory(self) -> Path:
         """
-        Get the path where the recipe info is located
+        Get the path where the package info is located
         """
         return Path(self.path).parent
 
     def write_json(self, path: Path | str):
         """
-        Write recipe_info to a json file.
+        Write package_info to a json file.
 
         Args:
-            path (Path | str): The path where the recipe_info will be written.
+            path (Path | str): The path where the package_info will be written.
         """
         path = Path(path).expanduser().resolve()
 
@@ -64,7 +64,7 @@ class RecipeInfo:
 
     def get_environment_variables(self) -> dict[str, str]:
         """
-        Get the environment variables for the recipe info.
+        Get the environment variables for the package info.
 
         Returns:
             dict[str, str]: A dictionary of environment variables.
@@ -78,13 +78,13 @@ class RecipeInfo:
     @classmethod
     def read_json_str(cls, json_str: str) -> Self:
         """
-        Read a recipe info from a json string.
+        Read a package info from a json string.
 
         Args:
-            json_str (str): The json string containing the recipe info.
+            json_str (str): The json string containing the package info.
 
         Returns:
-            RecipeInfo: An instance of RecipeInfo with the parsed data.
+            PackageInfo: An instance of RecipeInfo with the parsed data.
         """
         data = json.loads(json_str)
 
@@ -104,25 +104,25 @@ class RecipeInfo:
     @classmethod
     def read_json(cls, path: Path | str) -> Self:
         """
-        Read a recipe info from a json file.
+        Read a package info from a json file.
 
         Args:
-            path (Path | str): The path to the recipe info file.
+            path (Path | str): The path to the package info file.
 
         Returns:
-            RecipeInfo: An instance of RecipeInfo with the parsed data.
+            PackageInfo: An instance of RecipeInfo with the parsed data.
         """
         path = Path(path)
 
         logger.debug(f"Reading package description from {path}")
 
         if not path.exists():
-            raise FileNotFoundError(f"Recipe info file '{path}' does not exist.")
+            raise FileNotFoundError(f"package info file '{path}' does not exist.")
 
         with open(path, 'r') as file:
             json_str = file.read()
 
-        recipe_info = cls.read_json_str(json_str)
-        recipe_info.path = path
+        package_info = cls.read_json_str(json_str)
+        package_info.path = path
 
-        return recipe_info
+        return package_info
