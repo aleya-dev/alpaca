@@ -1,14 +1,26 @@
+from enum import Enum
 from os import makedirs
 from os.path import exists, join
 from pathlib import Path
 from shutil import rmtree
+from tarfile import open as tarfile_open
+from urllib.request import urlopen
 
+from alpaca.atom import decompose_package_atom_from_name
 from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.configuration import Configuration
-from alpaca.repository_ref import RepositoryType, RepositoryRef
-from alpaca.recipe import Recipe
 from alpaca.recipe_version import RecipeVersion
+from alpaca.repository_ref import RepositoryType, RepositoryRef
+
+
+class RepositorySearchType(Enum):
+    """
+    Enum representing the type of repository search.
+    """
+
+    RECIPE = "recipe"  # Search for recipes in the repository cache (typically during a build).
+    PACKAGE_INFO = "package_info"  # Search for package_info files in the repository cache (for package installation and dependency resolution).
 
 
 class _PackageCandidate:
@@ -32,6 +44,8 @@ class RepositoryCache:
         for repo_ref in self.configuration.repositories:
             if repo_ref.type == RepositoryType.GIT:
                 self._update_git_cache(repo_ref)
+            elif repo_ref.type == RepositoryType.WEB:
+                self._update_web_cache(repo_ref)
             elif repo_ref.type == RepositoryType.LOCAL:
                 logger.debug(f"Skipping local repository cache update for {repo_ref}")
             else:
@@ -52,13 +66,13 @@ class RepositoryCache:
 
             self._update_git_cache(repo_ref)
 
-    def find_recipe(self, path: str) -> Recipe | None:
+    def find_by_path(self, path: str, search_type: RepositorySearchType) -> Path | None:
         """
-        Find a recipe for the given search string in the repository cache.
-        This method should be implemented to search for recipes in the cache.
+        Find a path to a recipe for the given search string in the repository cache.
 
         Args:
             path (str): The path or name of the package to find.
+            search_type (RepositorySearchType): The type of search to perform (recipe or package_info).
         """
         if not exists(self.configuration.repository_cache_path):
             raise ValueError(
@@ -72,25 +86,31 @@ class RepositoryCache:
 
         if exists(path):
             logger.debug("Given package detected as absolute path.")
-            return Recipe.create_from_recipe_file(self.configuration, path)
+            return Path(path)
 
         logger.debug("Given package detected as name.")
-        return self._find_recipe_by_name(path)
+        return self._find_by_name(path, search_type)
 
-    def _find_recipe_by_name(self, name: str) -> Recipe | None:
-        parts = name.split('/')
 
-        if len(parts) > 2:
-            raise ValueError("Invalid package name format. Expected format: <name> or <name>/<version>")
+    def _find_by_name(self, name: str, search_type: RepositorySearchType) -> Path | None:
+        """
+        Find a recipe or package_info path by name in the repository cache.
 
-        name = parts[0]
+        Args:
+            name (str): The name of the package to search for
+            search_type (RepositorySearchType): The type of search to perform (recipe or package_info).
 
-        requested_version: str | None = None
+        Returns:
+            Path | None: The path to the recipe or package_info file if found, otherwise None.
+        """
 
-        if len(parts) == 2:
-            requested_version = parts[1]
- 
-        candidates : list[_PackageCandidate] = []
+        name, requested_version = decompose_package_atom_from_name(name)
+        candidates: list[_PackageCandidate] = []
+
+        file_extension = \
+            self.configuration.recipe_file_extension \
+                if search_type == RepositorySearchType.RECIPE else self.configuration.package_info_file_extension
+        search_name = "recipe" if search_type == RepositorySearchType.RECIPE else "package info"
 
         if len(self.configuration.repositories) == 0:
             raise Exception("No repositories configured. Please add repositories to the configuration.")
@@ -108,27 +128,28 @@ class RepositoryCache:
                 if not exists(package_path_base):
                     continue
 
-                logger.verbose(f"Searching for recipes in {package_path_base}")
+                logger.verbose(f"Searching for {search_name} in {package_path_base}")
 
                 for recipe_file_path in Path(package_path_base).iterdir():
                     if not recipe_file_path.is_file():
                         logger.verbose(f"Skipping non-file: {recipe_file_path.name}")
                         continue
 
-                    if not recipe_file_path.name.endswith(self.configuration.recipe_file_extension):
-                        logger.verbose(f"Skipping non-recipe file: {recipe_file_path.name}")
+                    if not recipe_file_path.name.endswith(file_extension):
+                        logger.verbose(f"Skipping file {recipe_file_path.name}. Not a {search_name} file.")
                         continue
 
-                    version = recipe_file_path.name[len(name)+1:][:-len(self.configuration.recipe_file_extension)]
+                    version = recipe_file_path.name[len(name) + 1:][:-len(file_extension)]
 
                     if version == "":
-                        logger.warning(f"Found recipe {recipe_file_path} without version information. Skipping.")
+                        logger.warning(
+                            f"Found {search_name} {recipe_file_path} without version information. Skipping.")
                         continue
 
                     candidates.append(_PackageCandidate(RecipeVersion.from_string(version), recipe_file_path))
 
         if not candidates:
-            logger.error(f"No recipes found for package '{name}' in the repository cache.")
+            logger.error(f"No {search_name} found for package '{name}' in the repository cache.")
             return None
 
         version = RecipeVersion.find_closest_version_or_none(
@@ -137,51 +158,16 @@ class RepositoryCache:
         )
 
         if version is None:
-            logger.error(f"No matching version found for package '{name}' with requested version '{requested_version}'.")
+            logger.error(
+                f"No matching version found for {search_name} '{name}' with requested version '{requested_version}'.")
             return None
 
         for candidate in candidates:
             if candidate.version == version:
-                logger.debug(f"Found recipe {candidate.path} for package '{name}' with version '{version}'")
-                return Recipe.create_from_recipe_file(self.configuration, candidate.path)
+                logger.debug(f"Found {search_name} {candidate.path} for package '{name}' with version '{version}'")
+                return candidate.path
 
         return None
-
-
-    def get_recipe_dependencies(self, recipe: Recipe) -> list[Recipe]:
-        """
-        Get the dependencies of a recipe recursively
-
-        Args:
-            recipe (Recipe): The recipe for which to get dependencies.
-
-        Returns:
-            list[Recipe]: A list of recipes that are dependencies of the given recipe.
-        """
-
-        dependencies = []
-
-        for dependency_name in recipe.info.dependencies:
-            dependency_recipe = self.find_recipe(dependency_name)
-
-            if dependency_recipe is None:
-                raise FileNotFoundError(
-                    f"Dependency '{dependency_name}' not found for recipe '{recipe.info.name}'. "
-                    "Please ensure the dependency is available in your repositories."
-                )
-
-            dependencies.append(dependency_recipe)
-            dependencies.extend(self.get_recipe_dependencies(dependency_recipe))
-
-        # Remove all duplicate entries without changing the order. A duplicate can be found by .info.name
-        seen = set()
-        dependencies = [x for x in dependencies if not (x.info.name in seen or seen.add(x.info.name))]
-
-        logger.debug(f"Found {len(dependencies)} dependencies for recipe '{recipe.info.name}'")
-
-        return dependencies
-
-
 
     def _ensure_repository_cache_path_exists(self):
         if not exists(self.configuration.repository_cache_path):
@@ -191,7 +177,6 @@ class RepositoryCache:
     def _update_git_cache(self, repo_ref: RepositoryRef):
         """
         Update the cache for a git repository.
-        This method should be implemented to handle git repository updates.
 
         Args:
             repo_ref (RepositoryRef): The reference to the git repository to update.
@@ -206,9 +191,9 @@ class RepositoryCache:
 
         if not exists(repository_path):
             if (
-                ShellCommand.exec(
-                    configuration=self.configuration,
-                    command=f"git clone {repo_ref.path} {repository_path}").error_code != 0):
+                    ShellCommand.exec(
+                        configuration=self.configuration,
+                        command=f"git clone {repo_ref.path} {repository_path}").error_code != 0):
                 logger.error(f"Failed to clone repository {repository_path}")
                 raise ValueError(f"Failed to clone repository {repository_path}")
         else:
@@ -223,7 +208,45 @@ class RepositoryCache:
                 raise ValueError(f"Local changes detected in repository {repository_path}")
 
             if ShellCommand.exec(
-                configuration=self.configuration,
-                command=f"git -C {repository_path} pull --ff-only").error_code != 0:
+                    configuration=self.configuration,
+                    command=f"git -C {repository_path} pull --ff-only").error_code != 0:
                 logger.error(f"Failed to update repository {repository_path}")
                 raise ValueError(f"Failed to update repository {repository_path}")
+
+    def _update_web_cache(self, repo_ref: RepositoryRef):
+        """
+        Update the cache for a web repository.
+
+        Args:
+            repo_ref (RepositoryRef): The reference to the web repository to update.
+        """
+
+        if repo_ref.type != RepositoryType.WEB:
+            raise ValueError(f"Repository reference {repo_ref} is not a web repository.")
+
+        repository_path = repo_ref.get_cache_path(self.configuration.repository_cache_path)
+        logger.debug(f"Updating web repository cache for {repo_ref} on {repository_path}")
+
+        if not exists(repository_path):
+            logger.info(f"Creating repository cache directory: {repository_path}")
+            makedirs(repository_path, exist_ok=True)
+
+        for stream in self.configuration.package_streams:
+            try:
+                with urlopen(f"{repo_ref.path}/packages/{stream}.package_info.tgz") as f:
+                    data = f.read()
+
+                # Extract the data to the repository path as a tarball
+                package_info_path = join(repository_path, f"{stream}.package_info.tgz")
+                with open(package_info_path, 'wb') as file:
+                    file.write(data)
+
+                with tarfile_open(package_info_path, "r:gz") as tar:
+                    tar.extractall(path=join(repository_path, stream))
+
+                logger.info(
+                    f"Downloaded package info for stream '{stream}' from {repo_ref.path} to {package_info_path}")
+            except Exception as e:
+                logger.warning(f"Could not download package info for stream '{stream}' from {repo_ref.path}: {e}")
+                logger.warning("It could be that this repository does not have this particular stream.")
+                continue

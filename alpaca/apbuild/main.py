@@ -4,7 +4,8 @@ from alpaca.build_context import BuildContext
 from alpaca.common.alpaca_application import handle_main
 from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
-from alpaca.repository_cache import RepositoryCache
+from alpaca.recipe import Recipe
+from alpaca.repository_cache import RepositoryCache, RepositorySearchType
 from alpaca.system_context import SystemContext
 
 
@@ -37,21 +38,23 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
 
 def _build_main(args: Namespace, config: Configuration):
     repo_cache = RepositoryCache(config)
-    recipe = repo_cache.find_recipe(args.package)
+    recipe_path = repo_cache.find_by_path(args.package, RepositorySearchType.RECIPE)
 
-    if recipe is None:
+    if recipe_path is None:
         raise FileNotFoundError(f"Could not find recipe for package '{args.package}'.")
 
-    logger.debug(f"Build recipe: {recipe.path}")
+    logger.debug(f"Build recipe: {recipe_path}")
 
-    dependencies = repo_cache.get_recipe_dependencies(recipe)
-
+    recipe = Recipe.create_from_recipe_file(config, recipe_path)
     context = SystemContext(config)
 
-    if not context.are_all_installed(dependencies):
+    if not context.are_all_installed(recipe.info.dependencies):
         if args.install_deps:
             logger.info("Installing dependencies from package infos...")
-            context.install_from_recipes(dependencies, ask_confirmation=not args.yes)
+            context.install_from_package_dependencies(
+                recipe.info.package_dependency.get_installation_order(include_self=False),
+                ask_confirmation=not args.yes
+            )
         else:
             raise RuntimeError(
                 "Cannot build package because not all dependencies are installed. "

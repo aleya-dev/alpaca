@@ -48,7 +48,7 @@ class BuildContext:
 
     @property
     def package_file_path(self) -> Path:
-        return Path(join(self.recipe.configuration.package_artifact_path,
+        return Path(join(self.recipe.configuration.package_artifact_path, self.recipe.info.stream, self.recipe.info.name,
                          f"{self.recipe.info.name}-{self.recipe.info.version}-{self.recipe.info.release}{self.recipe.configuration.package_file_extension}"))
 
     def create_package(self) -> PackageFile:
@@ -88,8 +88,15 @@ class BuildContext:
         copyfile(self.recipe.info.path, join(self.package_directory, ".package_info"))
         copyfile(self.recipe.path, join(self.package_directory, ".recipe"))
 
-        if not exists(self.recipe.configuration.package_artifact_path):
-            makedirs(self.recipe.configuration.package_artifact_path)
+        #join(self.package_directory, ".package_info")
+        output_directory = join(self.recipe.configuration.package_artifact_path, self.recipe.info.stream,
+            self.recipe.info.name)
+
+        if not exists(output_directory):
+            makedirs(output_directory)
+
+        copyfile(self.recipe.info.path, join(output_directory,
+            f"{self.recipe.info.file_atom}{self.recipe.configuration.package_info_file_extension}"))
 
         output_filename = self.package_file_path
 
@@ -145,13 +152,9 @@ class BuildContext:
     def _handle_sources(self):
         logger.info("Handle sources...")
 
-        if len(self.recipe.info.sources) != len(self.recipe.info.sha256sums):
-            raise Exception(f"Number of sources ({len(self.recipe.info.sources)}) does not match "
-                            f"number of sha256sums ({len(self.recipe.info.sha256sums)})")
-
-        if len(self.recipe.info.sources) > 0:
-            for source, sha256sum in zip(self.recipe.info.sources,
-                                         self.recipe.info.sha256sums):
+        if len(self.recipe.sources) > 0:
+            for source, sha256sum in zip(self.recipe.sources,
+                                         self.recipe.sha256sums):
                 filename = self._download_source_file(source, sha256sum)
 
                 if is_tarfile(filename):

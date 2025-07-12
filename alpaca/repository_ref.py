@@ -12,6 +12,7 @@ class RepositoryType(Enum):
 
     GIT = "git"
     LOCAL = "local"
+    WEB = "web"
 
 
 class RepositoryRef:
@@ -39,17 +40,11 @@ class RepositoryRef:
         elif ref_string.startswith("local+"):
             self.path = str(Path(ref_string[6:]).expanduser().resolve())
             self.type = RepositoryType.LOCAL
+        elif ref_string.startswith("web+"):
+            self.path = ref_string[4:]
+            self.type = RepositoryType.WEB
         else:
             raise ValueError(f"Invalid or unsupported repository type: {ref_string}")
-
-    def get_hash(self):
-        """
-        Get a hash of the repository reference
-        """
-
-        hash_object = hashlib.sha256()
-        hash_object.update(str(self).encode("utf-8"))
-        return hash_object.hexdigest()
 
     def get_cache_path(self, cache_base_path: str) -> Path:
         """
@@ -58,7 +53,10 @@ class RepositoryRef:
         if self.type == RepositoryType.LOCAL:
             return Path(self.path)
 
-        return Path(join(cache_base_path, self.get_hash()))
+        hash_object = hashlib.sha256()
+        hash_object.update(str(self).encode("utf-8"))
+
+        return Path(join(cache_base_path, hash_object.hexdigest()))
 
     def __str__(self) -> str:
         """
@@ -69,6 +67,8 @@ class RepositoryRef:
             return f"git+{self.path}"
         elif self.type == RepositoryType.LOCAL:
             return f"local+{self.path}"
+        elif self.type == RepositoryType.WEB:
+            return f"web+{self.path}"
         else:
             raise ValueError(f"Invalid or unsupported repository type: {self.type}")
 

@@ -2,17 +2,19 @@ from os import makedirs
 from os.path import join, exists
 from pathlib import Path
 
+from alpaca.atom import decompose_package_atom_from_name
 from alpaca.common.confirmation import ask_user_confirmation
 from alpaca.common.file_downloader import download_file
 from alpaca.common.hash import check_file_hash_from_file
 from alpaca.common.logging import logger
 from alpaca.configuration import Configuration
+from alpaca.package_dependency import PackageDependency
 from alpaca.package_file import PackageFile
 from alpaca.package_file_info import get_total_bytes
-from alpaca.package_server_ref import PackageServerType
 from alpaca.recipe import Recipe
 from alpaca.package_info import PackageInfo
-from alpaca.repository_cache import RepositoryCache
+from alpaca.repository_cache import RepositoryCache, RepositorySearchType
+from alpaca.repository_ref import RepositoryType
 
 
 def _bytes_to_human(num):
@@ -30,21 +32,25 @@ class SystemContext:
     def __init__(self, configuration: Configuration):
         self.configuration = configuration
 
-    def install_package_by_name(self, name: str, ask_confirmation: bool = True):
+    def install_package_by_package_dependency(self, package_dependency: PackageDependency, ask_confirmation: bool = True):
         cache = RepositoryCache(self.configuration)
-        recipe = cache.find_recipe(name)
+        package_info_path = cache.find_by_path(package_dependency.atom, search_type=RepositorySearchType.PACKAGE_INFO)
 
-        if not recipe:
-            logger.error(f"Recipe {name} not found in repository cache.")
+        if not package_info_path:
+            logger.error(f"Recipe {package_dependency.atom} not found in repository cache.")
             return
 
-        for package_server in self.configuration.package_servers:
-            if package_server.type == PackageServerType.LOCAL:
-                package_file = join(package_server.path, recipe.info.name,
-                                f"{recipe.info.name}-{recipe.info.version}-{recipe.info.release}.alpaca-package.tgz")
+        package_info = PackageInfo.read_json(package_info_path)
+
+        for repository in self.configuration.repositories:
+            if repository.type == RepositoryType.LOCAL:
+                package_file = join(repository.path, package_info.stream, package_info.name,
+                                f"{package_info.file_atom}{self.configuration.package_file_extension}")
 
                 if not exists(package_file):
                     continue
+
+                logger.info(f"Installing package {package_info.name} from local repository: {repository.path}")
 
                 check_file_hash_from_file(package_file)
 
@@ -52,31 +58,39 @@ class SystemContext:
                     self.install_package(package_file, ask_confirmation=ask_confirmation)
 
                 return
-            elif package_server.type == PackageServerType.WEB:
-                url = f"{package_server.path}/core/{recipe.info.name}/{recipe.info.name}-{recipe.info.version}-{recipe.info.release}.alpaca-package.tgz"
+            elif repository.type == RepositoryType.WEB:
+                try:
+                    url = f"{repository.path}/packages/{package_info.stream}/{package_info.name}/{package_info.file_atom}{self.configuration.package_file_extension}"
 
-                download_file(self.configuration, url, Path(self.configuration.download_cache_path),
-                              show_progress=self.configuration.show_download_progress)
-                download_file(self.configuration, f"{url}.sha256", Path(self.configuration.download_cache_path),
-                              show_progress=self.configuration.show_download_progress)
+                    download_file(self.configuration, url, Path(self.configuration.download_cache_path),
+                                  show_progress=self.configuration.show_download_progress)
+                    download_file(self.configuration, f"{url}.sha256", Path(self.configuration.download_cache_path),
+                                  show_progress=self.configuration.show_download_progress)
+                except Exception as e:
+                    continue
+
+                logger.info(f"Installing package {package_info.name} from web repository: {repository.path}")
 
                 download_path = join(self.configuration.download_cache_path,
-                                     f"{recipe.info.name}-{recipe.info.version}-{recipe.info.release}.alpaca-package.tgz")
+                                     f"{package_info.file_atom}{self.configuration.package_file_extension}")
                 check_file_hash_from_file(download_path)
 
                 with PackageFile(download_path) as package_file:
                     self.install_package(package_file, ask_confirmation=ask_confirmation)
 
                 # TODO: Delete the downloaded package file after installation
-
                 return
 
-        raise ValueError(f"Package {recipe.info.name} not found in any package server. It must be built from source.")
+            elif repository.type == RepositoryType.GIT:
+                logger.verbose(f"Skipping repository {repository.path} of type {repository.type} for package installation.")
+                continue
+
+        raise ValueError(f"Package {package_info.name} not found in any package server. It must be built from source.")
 
     def install_package(self, package_file: PackageFile, ask_confirmation: bool = True):
         package_info = package_file.read_package_info()
 
-        state = self.get_install_state(package_info.name)
+        state = self.get_install_state_by_name(package_info.name)
         updating = True if state else False
 
         if state and state.version == package_info.version:
@@ -109,12 +123,12 @@ class SystemContext:
 
         logger.info(f"Package {package_info.name} ({package_info.version}) installed successfully.")
 
-    def install_from_recipes(self, recipes: list[Recipe], ask_confirmation: bool = True):
+    def install_from_package_dependencies(self, dependencies: list[PackageDependency], ask_confirmation: bool = True):
         """
         Install a list of recipes to the system
 
         Args:
-            recipes (list[Recipe]): The list of recipes to install.
+            dependencies (list[PackageDependency]): A list of package dependencies to install.
             ask_confirmation (bool): Whether to ask for user confirmation before installing each package.
         """
 
@@ -122,14 +136,13 @@ class SystemContext:
             logger.info("Installation cancelled by user.")
             return
 
-        for recipe in recipes:
-            logger.info(f"Installing recipe: {recipe.info.name} ({recipe.info.version}-{recipe.info.release})")
-            self.install_package_by_name(recipe.info.name, ask_confirmation=False)
+        for dependency in dependencies:
+            logger.info(f"Installing recipe: {dependency.name}/{dependency.version})")
+            self.install_package_by_package_dependency(dependency, ask_confirmation=False)
 
-
-    def get_install_state(self, package_name: str) -> PackageInfo | None:
-        logger.verbose(f"Checking install state for package: {package_name}")
-        database_path = join(self.configuration.package_install_database_path, package_name)
+    def get_install_state_by_name(self, name: str) -> PackageInfo | None:
+        logger.verbose(f"Checking install state for package: {name}")
+        database_path = join(self.configuration.package_install_database_path, name)
         package_info_path = join(database_path, ".package_info")
 
         if not exists(package_info_path):
@@ -137,17 +150,18 @@ class SystemContext:
 
         return PackageInfo.read_json(package_info_path)
 
-    def are_all_installed(self, dependencies: list[Recipe]) -> bool:
+    def are_all_installed(self, dependencies: list[PackageDependency]) -> bool:
         for dependency in dependencies:
-            installed = self.get_install_state(dependency.info.name)
+            installed = self.get_install_state_by_name(dependency.name)
 
             if not installed:
-                logger.error(f"Required dependency {dependency.info.name}/{dependency.info.version}-{dependency.info.release} is not installed.")
+                logger.error(f"Required dependency {dependency.name}/{dependency.version} is not installed.")
                 return False
 
-            if installed.version != dependency.info.version or installed.release != dependency.info.release:
-                logger.error(f"Dependency {dependency.info.name} is installed with version {installed.version}-{installed.release}, "
-                             f"but recipe requires version {dependency.info.version}-{dependency.info.release}.")
+            if dependency.version != f"{installed.version}-{installed.release}":
+                logger.error(
+                    f"Dependency {dependency.name} is installed with version {installed.version}-{installed.release}, "
+                    f"but recipe requires version {dependency.version}.")
                 return False
 
         return True

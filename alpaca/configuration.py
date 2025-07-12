@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Self
 
 from alpaca.common.logging import logger
-from alpaca.package_server_ref import PackageServerRef
 from alpaca.repository_ref import RepositoryRef
 
 _system_config_path = "/etc/alpaca.conf"
@@ -19,6 +18,7 @@ _default_fakeroot_executable = "/usr/bin/fakeroot"
 _default_shell_executable = "/usr/bin/bash"
 
 _default_recipe_file_extension = ".recipe.sh"
+_default_package_info_file_extension = ".package-info.json"
 _default_package_file_extension = ".alpaca-package.tgz"
 
 
@@ -98,6 +98,9 @@ class Configuration:
 
         fakeroot_executable (str | None): Path to the fakeroot executable.
         shell_executable (str | None): Path to the shell executable.
+
+        recipe_file_extension (str | None): File extension for recipe files.
+        package_file_extension (str | None): File extension for package files.
     """
 
     def __init__(self, config_type: ConfigurationType, **kwargs) -> None:
@@ -124,7 +127,6 @@ class Configuration:
 
         self.repositories: list[RepositoryRef] | None = kwargs.get('repositories', None)
         self.package_streams: list[str] | None = kwargs.get('package_streams', None)
-        self.package_servers: list[PackageServerRef] | None = kwargs.get('package_servers', None)
 
         self.keep_build_directory: bool | None = kwargs.get('keep_build_directory', None)
         self.skip_package_check: bool | None = kwargs.get('skip_package_check', None)
@@ -144,6 +146,7 @@ class Configuration:
         self.shell_executable: str | None = kwargs.get('shell_executable', None)
 
         self.recipe_file_extension: str | None = kwargs.get('recipe_file_extension', None)
+        self.package_info_file_extension: str | None = kwargs.get('package_info_file_extension', None)
         self.package_file_extension: str | None = kwargs.get('package_file_extension', None)
 
     @classmethod
@@ -328,8 +331,7 @@ class Configuration:
             make_flags=config.get("build", "make_flags", fallback=None),
             ninja_flags=config.get("build", "ninja_flags", fallback=None),
             repositories=RepositoryRef.from_string(config.get("repository", "repositories", fallback="")),
-            package_streams=streams,
-            package_servers=PackageServerRef.from_string(config.get("packages", "package_servers", fallback="")),
+            package_streams=streams
         )
 
     @classmethod
@@ -358,13 +360,6 @@ class Configuration:
         else:
             logger.info(f"Streams were overwritten by the environment to {streams}")
 
-        package_server_path = environ.get("ALPACA_PACKAGE_SERVER")
-        package_server = None
-
-        if package_server_path is not None:
-            logger.info(f"Package server was overwritten by the environment to {package_server_path}")
-            package_server = PackageServerRef(package_server_path)
-
         return Configuration(
             config_type=ConfigurationType.ENVIRONMENT,
             verbose_output=verbose_enabled,
@@ -375,8 +370,7 @@ class Configuration:
             make_flags=environ.get("ALPACA_MAKE_FLAGS"),
             ninja_flags=environ.get("ALPACA_NINJA_FLAGS"),
             repositories=[repo] if repo else None,
-            package_streams=streams,
-            package_servers = [package_server] if package_server else None
+            package_streams=streams
         )
 
     @classmethod
@@ -398,6 +392,7 @@ class Configuration:
             fakeroot_executable=_default_fakeroot_executable,
             shell_executable=_default_shell_executable,
             recipe_file_extension=_default_recipe_file_extension,
+            package_info_file_extension=_default_package_info_file_extension,
             package_file_extension=_default_package_file_extension
         )
 
