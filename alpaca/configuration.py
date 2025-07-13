@@ -20,7 +20,7 @@ _default_shell_executable = "/usr/bin/bash"
 _default_recipe_file_extension = ".recipe.sh"
 _default_package_info_file_extension = ".package-info.json"
 _default_package_file_extension = ".alpaca-package.tgz"
-_default_package_database_extension = ".package_info.tgz"
+_default_package_database_file_extension = ".package_info.tgz"
 _default_package_repository = "web+https://packages.ruadeil.lgbt/packages/"
 _default_package_streams = ["core"]
 
@@ -393,7 +393,7 @@ class Configuration:
             recipe_file_extension=_default_recipe_file_extension,
             package_info_file_extension=_default_package_info_file_extension,
             package_file_extension=_default_package_file_extension,
-            package_database_extension=_default_package_database_extension,
+            package_database_extension=_default_package_database_file_extension,
             repositories=RepositoryRef.from_string(_default_package_repository),
             streams=_default_package_streams
         )
