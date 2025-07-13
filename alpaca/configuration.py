@@ -347,12 +347,7 @@ class Configuration:
         verbose = environ.get("ALPACA_VERBOSE")
         verbose_enabled = True if verbose and verbose == "1" else None
 
-        repo_path = environ.get("ALPACA_REPOSITORY")
-        repo = None
-
-        if repo_path is not None:
-            logger.info(f"Repository was overwritten by the environment to {repo_path}")
-            repo = RepositoryRef(repo_path)
+        repos = RepositoryRef.from_string(environ.get("ALPACA_REPOSITORY", ""))
 
         streams = environ.get("ALPACA_STREAMS", "").split(",")
         if not streams or streams == [""]:
@@ -369,7 +364,7 @@ class Configuration:
             ld_flags=environ.get("ALPACA_LD_FLAGS"),
             make_flags=environ.get("ALPACA_MAKE_FLAGS"),
             ninja_flags=environ.get("ALPACA_NINJA_FLAGS"),
-            repositories=[repo] if repo else None,
+            repositories=repos if len(repos) > 0 else None,
             package_streams=streams
         )
 
