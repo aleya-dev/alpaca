@@ -20,6 +20,7 @@ _default_shell_executable = "/usr/bin/bash"
 _default_recipe_file_extension = ".recipe.sh"
 _default_package_info_file_extension = ".package-info.json"
 _default_package_file_extension = ".alpaca-package.tgz"
+_default_package_database_extension = ".package_info.tgz"
 
 
 __version__ = importlib.metadata.version("aleya-alpaca")
@@ -148,6 +149,7 @@ class Configuration:
         self.recipe_file_extension: str | None = kwargs.get('recipe_file_extension', None)
         self.package_info_file_extension: str | None = kwargs.get('package_info_file_extension', None)
         self.package_file_extension: str | None = kwargs.get('package_file_extension', None)
+        self.package_database_extension: str | None = kwargs.get('package_database_extension', None)
 
     @classmethod
     def create_application_config(cls, application_arguments: Namespace) -> Self:
@@ -388,7 +390,8 @@ class Configuration:
             shell_executable=_default_shell_executable,
             recipe_file_extension=_default_recipe_file_extension,
             package_info_file_extension=_default_package_info_file_extension,
-            package_file_extension=_default_package_file_extension
+            package_file_extension=_default_package_file_extension,
+            package_database_extension=_default_package_database_extension
         )
 
     @classmethod

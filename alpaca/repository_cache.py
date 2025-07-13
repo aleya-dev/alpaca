@@ -7,6 +7,8 @@ from tarfile import open as tarfile_open
 from urllib.request import urlopen
 
 from alpaca.atom import decompose_package_atom_from_name
+from alpaca.common.file_downloader import download_file
+from alpaca.common.hash import check_file_hash_from_file
 from alpaca.common.logging import logger
 from alpaca.common.shell_command import ShellCommand
 from alpaca.configuration import Configuration
@@ -233,13 +235,14 @@ class RepositoryCache:
 
         for stream in self.configuration.package_streams:
             try:
-                with urlopen(f"{repo_ref.path}/packages/{stream}.package_info.tgz") as f:
-                    data = f.read()
+                download_file(self.configuration, f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}", repository_path,
+                              show_progress=self.configuration.show_download_progress)
 
-                # Extract the data to the repository path as a tarball
-                package_info_path = join(repository_path, f"{stream}.package_info.tgz")
-                with open(package_info_path, 'wb') as file:
-                    file.write(data)
+                download_file(self.configuration, f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}.sha256", repository_path,
+                              show_progress=self.configuration.show_download_progress)
+
+                package_info_path = join(repository_path, f"{stream}{self.configuration.package_database_extension}")
+                check_file_hash_from_file(package_info_path)
 
                 with tarfile_open(package_info_path, "r:gz") as tar:
                     tar.extractall(path=join(repository_path, stream))
