@@ -366,7 +366,7 @@ class Configuration:
             ld_flags=environ.get("ALPACA_LD_FLAGS"),
             make_flags=environ.get("ALPACA_MAKE_FLAGS"),
             ninja_flags=environ.get("ALPACA_NINJA_FLAGS"),
-            repositories=repos if len(repos) > 0 else None,
+            repositories=repos if repos else None,
             package_streams=streams
         )
 

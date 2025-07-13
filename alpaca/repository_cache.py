@@ -4,7 +4,6 @@ from os.path import exists, join
 from pathlib import Path
 from shutil import rmtree
 from tarfile import open as tarfile_open
-from urllib.request import urlopen
 
 from alpaca.atom import decompose_package_atom_from_name
 from alpaca.common.file_downloader import download_file
@@ -92,7 +91,6 @@ class RepositoryCache:
 
         logger.debug("Given package detected as name.")
         return self._find_by_name(path, search_type)
-
 
     def _find_by_name(self, name: str, search_type: RepositorySearchType) -> Path | None:
         """
@@ -235,17 +233,26 @@ class RepositoryCache:
 
         for stream in self.configuration.package_streams:
             try:
-                download_file(self.configuration, f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}", repository_path,
+                download_file(self.configuration,
+                              f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}",
+                              repository_path,
                               show_progress=self.configuration.show_download_progress)
 
-                download_file(self.configuration, f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}.sha256", repository_path,
+                download_file(self.configuration,
+                              f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}.sha256",
+                              repository_path,
                               show_progress=self.configuration.show_download_progress)
 
                 package_info_path = join(repository_path, f"{stream}{self.configuration.package_database_extension}")
                 check_file_hash_from_file(package_info_path)
 
+                stream_dir = join(repository_path, stream)
+
+                if exists(stream_dir):
+                    rmtree(stream_dir)
+
                 with tarfile_open(package_info_path, "r:gz") as tar:
-                    tar.extractall(path=join(repository_path, stream))
+                    tar.extractall(path=repository_path)
 
                 logger.info(
                     f"Downloaded package info for stream '{stream}' from {repo_ref.path} to {package_info_path}")
