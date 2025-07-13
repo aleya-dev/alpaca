@@ -76,14 +76,10 @@ class PackageFile:
 
     def extract(self, destination: str | Path):
         """
-        Extract all files from the package to the destination except for the package database files.
+        Extract all files from the package to the destination directory.
         """
 
         if not self._tar:
             self._open()
 
-        for member in self._tar.getmembers():
-            if member.name not in (".recipe", ".file_info", ".package_info"):
-                self._tar.extract(member, path=destination)
-            else:
-                continue
+        self._tar.extractall(path=destination)

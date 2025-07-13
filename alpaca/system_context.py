@@ -1,8 +1,8 @@
-from os import makedirs
-from os.path import join, exists
+from os import rename, chmod, remove
+from os.path import join, exists, lexists
 from pathlib import Path
+from shutil import rmtree
 
-from alpaca.atom import decompose_package_atom_from_name
 from alpaca.common.confirmation import ask_user_confirmation
 from alpaca.common.file_downloader import download_file
 from alpaca.common.hash import check_file_hash_from_file
@@ -11,7 +11,6 @@ from alpaca.configuration import Configuration
 from alpaca.package_dependency import PackageDependency
 from alpaca.package_file import PackageFile
 from alpaca.package_file_info import get_total_bytes
-from alpaca.recipe import Recipe
 from alpaca.package_info import PackageInfo
 from alpaca.repository_cache import RepositoryCache, RepositorySearchType
 from alpaca.repository_ref import RepositoryType
@@ -78,7 +77,9 @@ class SystemContext:
                 with PackageFile(download_path) as package_file:
                     self.install_package(package_file, ask_confirmation=ask_confirmation)
 
-                # TODO: Delete the downloaded package file after installation
+                logger.verbose(f"Removing downloaded package file: {download_path}")
+                remove(download_path)
+
                 return
 
             elif repository.type == RepositoryType.GIT:
@@ -108,18 +109,57 @@ class SystemContext:
             logger.info("Installation cancelled by user.")
             return
 
-        database_path = join(self.configuration.package_install_database_path, package_info.name)
+        package_file_tempdir = Path(join(self.configuration.download_cache_path, package_info.file_atom))
+        package_file.extract(package_file_tempdir)
 
-        if not updating and not exists(database_path):
+        database_path = Path(join(self.configuration.package_install_database_path, package_info.name))
+
+        if not database_path.exists():
             logger.verbose(f"Creating database directory: {database_path}")
-            makedirs(database_path)
+            database_path.mkdir(parents=True, exist_ok=True)
 
-        # TODO: Special case for when updating. We should remove files that no longer exist in the package.
+        for meta_file in [".recipe", ".file_info", ".package_info"]:
+            src = package_file_tempdir / meta_file
+            dst = database_path / meta_file
+            logger.verbose(f"Moving metadata: {src} -> {dst}")
+            rename(src, dst)
 
-        package_file.extract_file(".recipe", database_path)
-        package_file.extract_file(".file_info", database_path)
-        package_file.extract_file(".package_info", database_path)
-        package_file.extract(self.configuration.prefix)
+        for source_file in package_file_tempdir.rglob("*"):
+            if source_file.is_dir():
+                continue
+
+            relative_path = source_file.relative_to(package_file_tempdir)
+            destination_file = Path(self.configuration.prefix) / relative_path
+            destination_parent = destination_file.parent
+
+            if not destination_parent.exists():
+                logger.verbose(f"Creating directory: {destination_parent}")
+                destination_parent.mkdir(parents=True, exist_ok=True)
+
+            if source_file.is_symlink():
+                symlink_target = source_file.readlink()
+
+                if lexists(destination_file):
+                    logger.verbose(f"Removing existing file/symlink at: {destination_file}")
+                    destination_file.unlink()
+
+                logger.info(f"Creating symlink: {destination_file} -> {symlink_target}")
+                destination_file.symlink_to(symlink_target)
+            else:
+                mode = source_file.stat().st_mode
+
+                if destination_file.exists():
+                    logger.verbose(f"Overwriting existing file: {destination_file}")
+                    remove(destination_file)
+
+                logger.verbose(f"Installing file: {relative_path} -> {destination_file}")
+                rename(source_file, destination_file)
+
+                logger.verbose(f"Setting permissions for: {destination_file}")
+                chmod(destination_file, mode & 0o777)
+
+        logger.verbose(f"Removing temporary directory: {package_file_tempdir}")
+        rmtree(package_file_tempdir, ignore_errors=True)
 
         logger.info(f"Package {package_info.name} ({package_info.version}) installed successfully.")
 
