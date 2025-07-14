@@ -139,23 +139,23 @@ class SystemContext:
             if source_file.is_symlink():
                 symlink_target = source_file.readlink()
 
+                overwrite = False
                 if lexists(destination_file):
-                    logger.verbose(f"Removing existing file/symlink at: {destination_file}")
+                    overwrite = True
                     destination_file.unlink()
 
-                logger.info(f"Creating symlink: {destination_file} -> {symlink_target}")
+                logger.verbose(f"{destination_file} -> {symlink_target} ({"overwriting" if overwrite else "creating symlink"})")
                 destination_file.symlink_to(symlink_target)
             else:
                 mode = source_file.stat().st_mode
 
+                overwrite = False
                 if destination_file.exists():
-                    logger.verbose(f"Overwriting existing file: {destination_file}")
+                    overwrite = True
                     remove(destination_file)
 
-                logger.verbose(f"Installing file: {relative_path} -> {destination_file}")
+                logger.verbose(f"{"overwriting" if overwrite else "copying"} {relative_path} -> {destination_file}")
                 rename(source_file, destination_file)
-
-                logger.verbose(f"Setting permissions for: {destination_file}")
                 chmod(destination_file, mode & 0o777)
 
         logger.verbose(f"Removing temporary directory: {package_file_tempdir}")
