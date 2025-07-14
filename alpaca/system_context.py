@@ -61,9 +61,9 @@ class SystemContext:
                 try:
                     url = f"{repository.path}/{package_info.stream}/{package_info.name}/{package_info.file_atom}{self.configuration.package_file_extension}"
 
-                    download_file(self.configuration, url, Path(self.configuration.download_cache_path),
+                    download_file(url, Path(self.configuration.download_cache_path),
                                   show_progress=self.configuration.show_download_progress)
-                    download_file(self.configuration, f"{url}.sha256", Path(self.configuration.download_cache_path),
+                    download_file(f"{url}.sha256", Path(self.configuration.download_cache_path),
                                   show_progress=self.configuration.show_download_progress)
                 except Exception as e:
                     continue

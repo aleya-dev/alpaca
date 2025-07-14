@@ -233,13 +233,11 @@ class RepositoryCache:
 
         for stream in self.configuration.package_streams:
             try:
-                download_file(self.configuration,
-                              f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}",
+                download_file(f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}",
                               repository_path,
                               show_progress=self.configuration.show_download_progress)
 
-                download_file(self.configuration,
-                              f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}.sha256",
+                download_file(f"{repo_ref.path}/{stream}{self.configuration.package_database_extension}.sha256",
                               repository_path,
                               show_progress=self.configuration.show_download_progress)
 

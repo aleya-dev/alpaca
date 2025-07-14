@@ -270,8 +270,7 @@ class BuildContext:
         # If the source is a URL
         if urlparse(source).scheme != "":
             logger.verbose(f"Source {source} is a URL. Downloading.")
-            download_file(self.recipe.configuration, source, source_directory,
-                          show_progress=self.recipe.configuration.show_download_progress)
+            download_file(source, source_directory, show_progress=self.recipe.configuration.show_download_progress)
         # If not, check if it is a full path
         elif isfile(source):
             logger.verbose(f"Source {source} is a direct path. Copying.")

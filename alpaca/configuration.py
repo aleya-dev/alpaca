@@ -89,7 +89,6 @@ class Configuration:
         skip_package_check (bool | None): Skip the package check/unit testing phase.
 
         download_cache_path (str | None): Path to the download cache directory.
-        force_download (str | None): Force redownloading files regardless of cache.
         repository_cache_path (str | None): Path to where repositories are downloaded to.
 
         package_workspace_path (str | None): Path to the package workspace directory to use while building the package.
@@ -135,7 +134,6 @@ class Configuration:
         self.skip_package_check: bool | None = kwargs.get('skip_package_check', None)
 
         self.download_cache_path: str | None = kwargs.get('download_cache_path', None)
-        self.force_download: str | None = kwargs.get('force_download', None)
         self.repository_cache_path: str | None = kwargs.get('repository_cache_path', None)
 
         self.package_workspace_path: str | None = kwargs.get('package_workspace_path', None)
@@ -418,7 +416,6 @@ class Configuration:
             keep_build_directory=getattr(args, "keep", None),
             prefix=getattr(args, "target", None),
             skip_package_check=getattr(args, "no_check", None),
-            force_download=getattr(args, "download", None),
             package_artifact_path=getattr(args, "output", None),
             package_delete_workspace=getattr(args, "delete_workdir", None)
         )
