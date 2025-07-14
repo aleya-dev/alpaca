@@ -33,6 +33,9 @@ def _create_arg_parser(parser: ArgumentParser) -> ArgumentParser:
     parser.add_argument("--yes", "-y", action="store_true",
         help="Assume yes to all questions during the build process. This is useful for automated builds.")
 
+    parser.add_argument("--dump-recipe-path", action="store_true",
+        help="Dump the path to the recipe file that would be used for building instead of actually building it.")
+
     return parser
 
 
@@ -44,6 +47,10 @@ def _build_main(args: Namespace, config: Configuration):
         raise FileNotFoundError(f"Could not find recipe for package '{args.package}'.")
 
     logger.debug(f"Build recipe: {recipe_path}")
+
+    if args.dump_recipe_path:
+        print(recipe_path)
+        return
 
     recipe = Recipe.create_from_recipe_file(config, recipe_path)
     context = SystemContext(config)

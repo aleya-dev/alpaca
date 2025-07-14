@@ -6,7 +6,7 @@ __version__ = importlib.metadata.version("aleya-alpaca")
 
 from typing import Callable
 
-from alpaca.common.logging import enable_verbose_logging, logger
+from alpaca.common.logging import enable_verbose_logging, logger, suppress_logging
 from alpaca.configuration import Configuration
 
 
@@ -60,14 +60,20 @@ def handle_main(application_name: str, require_root: bool, disallow_root: bool,
 
         args = parser.parse_args()
 
+        # Hack to ensure we don't log additional things when dumping the recipe path
+        suppress_logging_required = hasattr(args, 'dump_recipe_path') and args.dump_recipe_path
+
+        if suppress_logging_required:
+            suppress_logging()
+
         # Hack to ensure that verbose logs from the configuration module are printed
-        if args.verbose:
+        if args.verbose and not suppress_logging_required:
             enable_verbose_logging()
 
         config = _create_configuration_for_application(args)
         config.ensure_executables_exist()
 
-        if config.verbose_output:
+        if config.verbose_output and not suppress_logging_required:
             enable_verbose_logging()
 
         is_root = getuid() == 0

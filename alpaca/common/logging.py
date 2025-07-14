@@ -28,6 +28,13 @@ def _log_verbose(self, message, *args, **kwargs):
         self._log(VERBOSE, message, args, **kwargs)
 
 
+def suppress_logging():
+    """
+    Suppresses all logging output to only errors
+    """
+    logger.setLevel(logging.ERROR)
+
+
 def enable_verbose_logging():
     if logger.level == VERBOSE:
         return
