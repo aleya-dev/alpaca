@@ -247,8 +247,10 @@ class RepositoryCache:
                 stream_dir = join(repository_path, stream)
 
                 if exists(stream_dir):
+                    logger.verbose(f"Removing existing stream directory: {stream_dir}")
                     rmtree(stream_dir)
 
+                logger.verbose(f"Extracting package info for stream '{stream}' to {repository_path}")
                 with tarfile_open(package_info_path, "r:gz") as tar:
                     tar.extractall(path=repository_path)
 
