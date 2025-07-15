@@ -3,7 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 from alpaca.common.progress_bar import show_progress_bar
-from common.logging import logger
+from alpaca.common.logging import logger
 
 
 def download_file(url: str, destination_dir: Path, show_progress: bool = True):
