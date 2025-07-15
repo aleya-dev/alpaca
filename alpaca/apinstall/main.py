@@ -28,7 +28,7 @@ def _install_main(args: Namespace, config: Configuration):
 
     if config.prefix == '/' and not is_aleya_linux_host():
         raise ValueError("Target directory '/' is not allowed on non-Aleya Linux hosts. "
-                         "If you intended to install a new system, please specify a the mounted "
+                         "If you intended to install a new system, please specify the mounted "
                          "target directory using --target.")
 
     system = SystemContext(config)
