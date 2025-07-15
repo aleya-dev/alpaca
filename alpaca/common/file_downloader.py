@@ -1,4 +1,5 @@
-from os.path import basename, join, getsize
+from os import makedirs
+from os.path import basename, join, getsize, exists
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
@@ -23,6 +24,11 @@ def download_file(url: str, destination_dir: Path, show_progress: bool = True):
 
     parsed_url = urlparse(url)
     file_name = basename(parsed_url.path)
+
+    if not exists(destination_dir):
+        logger.verbose(f"Creating download destination directory: {destination_dir}")
+        makedirs(destination_dir)
+
     destination_path = join(destination_dir, file_name)
 
     urlretrieve(url, destination_path, reporthook=lambda block_num, block_size, total_size: (
