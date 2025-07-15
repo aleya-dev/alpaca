@@ -413,6 +413,7 @@ class Configuration:
             config_type=ConfigurationType.ARGUMENTS,
             verbose_output=getattr(args, "verbose", None),
             suppress_build_output=getattr(args, "quiet", None),
+            show_download_progress=getattr(args, "no_progress", None),
             keep_build_directory=getattr(args, "keep", None),
             prefix=getattr(args, "target", None),
             skip_package_check=getattr(args, "no_check", None),

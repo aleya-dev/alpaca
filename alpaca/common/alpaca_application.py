@@ -29,6 +29,8 @@ def _create_arg_parser_for_application(application_name: str) -> ArgumentParser:
     parser.add_argument("--target", "-t", type=str,
                         help="Absolute path to the system root. Defaults to '/' if not specified.")
 
+    parser.add_argument("--no-progress", action="store_true", help="Disable the download progress bar.")
+
     return parser
 
 
