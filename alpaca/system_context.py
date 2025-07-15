@@ -66,6 +66,7 @@ class SystemContext:
                     download_file(f"{url}.sha256", Path(self.configuration.download_cache_path),
                                   show_progress=self.configuration.show_download_progress)
                 except Exception as e:
+                    logger.verbose(f"Failed to download package {package_info.name} from web repository: {repository.path}. Error: {e}")
                     continue
 
                 logger.info(f"Installing package {package_info.name} from web repository: {repository.path}")
