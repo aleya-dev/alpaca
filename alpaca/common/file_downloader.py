@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
 from alpaca.common.progress_bar import show_progress_bar
+from common.logging import logger
 
 
 def download_file(url: str, destination_dir: Path, show_progress: bool = True):
@@ -17,6 +18,8 @@ def download_file(url: str, destination_dir: Path, show_progress: bool = True):
     Returns:
         str: The name of the downloaded file
     """
+
+    logger.verbose(f"Downloading file from {url} to {destination_dir}")
 
     parsed_url = urlparse(url)
     file_name = basename(parsed_url.path)
