@@ -3,9 +3,10 @@ from os.path import basename, join, getsize, exists
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import urlretrieve
-from alpaca.common.progress_bar import show_progress_bar
-from alpaca.common.logging import logger
+from alpaca.core.common.logging import get_logger
+from alpaca.core.common.progress_bar import show_progress_bar
 
+logger = get_logger(__name__)
 
 def download_file(url: str, destination_dir: Path, show_progress: bool = True):
     """

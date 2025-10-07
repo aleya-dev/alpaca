@@ -3,7 +3,9 @@ import os
 from os.path import basename
 from pathlib import Path
 
-from alpaca.common.logging import logger
+from alpaca.core.common.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_file_hash(path: str | Path) -> str:

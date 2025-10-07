@@ -3,7 +3,9 @@ from os import walk
 from os.path import join, relpath
 from pathlib import Path
 
-from alpaca.common.logging import logger
+from alpaca.core.common.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def extract_tar(file_path: Path, destination_dir: Path):
@@ -25,7 +27,7 @@ def extract_tar(file_path: Path, destination_dir: Path):
 
 def compress_tar(directory: Path | str, archive_path: Path | str):
     """
-    Compress a directory to a tar.xz archive
+    Compress a directory to a tar.zst archive
 
     Args:
         directory (Path): The source directory to archive
@@ -45,7 +47,7 @@ def compress_tar(directory: Path | str, archive_path: Path | str):
 
             files.append(join(root, filename))
 
-    with tarfile.open(archive_path, "w:gz") as tar:
+    with tarfile.open(archive_path, "w:xz") as tar:
         for file in files:
             tar.add(file, arcname=relpath(file, directory))
 

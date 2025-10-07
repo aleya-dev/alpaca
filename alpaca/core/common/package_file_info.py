@@ -1,7 +1,9 @@
 from hashlib import sha256
 from pathlib import Path
 
-from alpaca.common.logging import logger
+from alpaca.core.common.logging import get_logger
+
+logger = get_logger(__name__)
 
 _file_info_file_name = ".file_info"
 
@@ -23,7 +25,7 @@ class FileInfo:
         return f"{self.permissions} {self.sha256_hash} {self.size} {self.name}"
 
 
-def write_file_info(path: Path | str):
+def write_file_info(path: Path, destination: Path):
     """
     Write a .file_info file to the specified path.
 
@@ -32,15 +34,14 @@ def write_file_info(path: Path | str):
 
     Args:
         path (Path): The path where the .file_info file will be written.
+        destination (Path): The path to the directory to scan for files.
     """
-    path = Path(path)
-
     if not path.is_dir():
         raise ValueError(f"The specified path '{path}' is not a directory or does not exist.")
 
-    logger.info(f"Writing file info to {path / _file_info_file_name}")
+    logger.verbose(f"Writing file info to {destination}")
 
-    with open(path / _file_info_file_name, "w") as file_info:
+    with open(destination, "w") as file_info:
         for file in path.rglob("*"):
             if file.is_file():
                 if file.name in _file_ignore_list:
@@ -49,9 +50,9 @@ def write_file_info(path: Path | str):
                 permissions = oct(file.stat().st_mode)[-3:]
                 sha256_hash = sha256(file.read_bytes()).hexdigest()
                 size = file.stat().st_size
-                file_info.write(f"{permissions} {sha256_hash} {size} {file.name}\n")
+                file_info.write(f"{permissions} {sha256_hash} {size} /{file.relative_to(path)}\n")
 
-    logger.info(f"File info written to {path / _file_info_file_name}")
+    logger.verbose(f"File info written to {destination}")
 
 
 def read_file_info_from_string(file_info_string: str) -> list[FileInfo]:

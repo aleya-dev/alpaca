@@ -5,8 +5,9 @@ from enum import Enum
 from os import environ
 from pathlib import Path
 
-from alpaca.common.logging import logger
-from alpaca.configuration import Configuration
+from alpaca.core.common.logging import get_logger
+
+logger = get_logger(__name__)
 
 _bash_executable = "/usr/bin/bash"
 _fakeroot_executable = "/usr/bin/fakeroot"
@@ -43,14 +44,12 @@ class ShellCommand:
         stream.close()
 
     @staticmethod
-    def exec(configuration: Configuration, command: str, environment: dict[str, str] | None = None,
-             working_directory: Path | None = None, print_output: bool = True, throw_on_error: bool = False,
-             use_fakeroot: bool = False) -> ShellCommandResult:
+    def exec(args: list[str], environment: dict[str, str] | None = None, working_directory: Path | None = None,
+             print_output: bool = True, throw_on_error: bool = False, use_fakeroot: bool = False) -> ShellCommandResult:
         """Execute a command in the shell
 
         Args:
-            configuration (Configuration): The configuration to use for the command execution
-            command (str): The command to execute
+            args (list[str]): The command and its arguments to execute with bash -c; optionally prefixed with fakeroot
             environment (dict[str, str], optional): A dictionary of environment variables to set. Defaults to None.
             working_directory (str, optional): The working directory to execute the command in. Defaults to None.
             print_output (bool, optional): Whether to print the output of the command. Defaults to True.
@@ -61,22 +60,22 @@ class ShellCommand:
             tuple[str, str]: A tuple containing the stdout and stderr output of the command
         """
 
+        full_args = []
+
         env = environ.copy()
 
         if environment is not None:
             env.update(environment)
 
-        args = []
-
         if use_fakeroot:
             logger.info("Entering fakeroot...")
-            args.append(configuration.fakeroot_executable)
+            full_args.append(_fakeroot_executable)
 
-        args.append(configuration.shell_executable)
-        args.append("-c")
-        args.append(command)
+        full_args.append(_bash_executable)
+        full_args.append("-c")
+        full_args.extend(args)
 
-        process = subprocess.Popen(args=args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
+        process = subprocess.Popen(args=full_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
                                    universal_newlines=True, cwd=working_directory, env=env)
 
         stdout_str = io.StringIO()
@@ -99,16 +98,18 @@ class ShellCommand:
             logger.fatal(stderr_str.getvalue())
             raise Exception(f"Command failed with error code {error_code}.")
 
+        if use_fakeroot:
+            logger.info("Leaving fakeroot...")
+
         return ShellCommandResult(error_code, stdout_str.getvalue(), stderr_str.getvalue())
 
     @staticmethod
-    def exec_get_value(configuration: Configuration, command: str, working_directory: str | None = None,
+    def exec_get_value(args: list[str], working_directory: str | None = None,
                        environment: dict[str, str] | None = None, ) -> str:
         """Execute a command in the shell and return the stdout. Expects a single line of output.
 
         Args:
-            configuration (Configuration): The configuration to use for the command execution
-            command (str): The command to execute
+            args (list[str]): The command and its arguments to execute
             working_directory (str, optional): The working directory to execute the command in. Defaults to None.
             environment (dict[str, str], optional): A dictionary of environment variables to set. Defaults to None.
 
@@ -116,7 +117,7 @@ class ShellCommand:
             str: The stdout of the command, trimmed with the newline removed
         """
 
-        result = ShellCommand.exec(configuration=configuration, command=command, environment=environment,
-                                   working_directory=working_directory, print_output=False, throw_on_error=True)
+        result = ShellCommand.exec(args=args, environment=environment, working_directory=working_directory,
+                                   print_output=False, throw_on_error=True)
 
         return result.stdout.strip()

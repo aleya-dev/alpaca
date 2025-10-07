@@ -35,11 +35,14 @@ exclude = ["devpkgs"]
 [project.optional-dependencies]
 test = ["pytest"]
 
+[tool.setuptools.package-data]
+alpaca = ["core/scripts/*.sh"]
+
 [project.scripts]
-apbuild = "alpaca.apbuild.main:main"
-apcommand = "alpaca.apcommand.main:main"
-apinstall = "alpaca.apinstall.main:main"
-apupdate = "alpaca.apupdate.main:main"
+apbuild = "alpaca.cli.apbuild.main:main"
+appack = "alpaca.cli.appack.main:main"
+apinstall = "alpaca.cli.apinstall.main:main"
+apuninstall = "alpaca.cli.apuninstall.main:main"
 
 [tool.setuptools_scm]
 local_scheme = "no-local-version"
