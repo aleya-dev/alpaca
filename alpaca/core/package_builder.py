@@ -1,3 +1,4 @@
+import os
 from importlib import resources
 from os.path import basename, isfile, join
 from pathlib import Path
@@ -37,27 +38,32 @@ class PackageBuilder:
     def package_directory(self) -> Path:
         return Path.cwd() / 'package'
 
-    def ensure_directories(self, delete_if_exists: bool = False):
-        PackageBuilder._check_directory(self.source_directory, delete_if_exists=delete_if_exists)
+    def ensure_directories(self, keep_source: bool = False, delete_if_exists: bool = False):
+        if not keep_source:
+            PackageBuilder._check_directory(self.source_directory, delete_if_exists=delete_if_exists)
         PackageBuilder._check_directory(self.build_directory, delete_if_exists=delete_if_exists)
         PackageBuilder._check_directory(self.package_directory, delete_if_exists=delete_if_exists)
 
-    def handle_sources(self, skip_hash_check: bool = False):
-        logger.info(f"Downloading sources for recipe {self.recipe.name}")
+    def handle_sources(self, keep_source: bool = False, skip_hash_check: bool = False):
+        logger.header(f"Downloading sources for recipe {self.recipe.name}")
 
-        if len(self.recipe.sources) > 0:
-            for source, sha256sum in zip(self.recipe.sources,
-                                         self.recipe.sha256sums):
-                filename = self._download_source_file(source, sha256sum, skip_hash_check=skip_hash_check)
+        if keep_source:
+            logger.info("Skipping source download and copy step")
+        else:
+            if len(self.recipe.sources) > 0:
+                for source, sha256sum in zip(self.recipe.sources,
+                                             self.recipe.sha256sums):
 
-                if is_tarfile(filename):
-                    logger.info(f"Extracting file {basename(filename)}...")
-                    extract_tar(Path(filename), self.source_directory)
+                    filename = self._download_source_file(source, sha256sum, skip_hash_check=skip_hash_check)
+
+                    if is_tarfile(filename):
+                        logger.info(f"Extracting file {basename(filename)}...")
+                        extract_tar(Path(filename), self.source_directory)
 
         self._call_script_function("sources", working_directory=self.source_directory)
 
     def build(self, quiet: bool = False):
-        logger.info(f"Building packages for recipe {self.recipe.name}")
+        logger.header(f"Building packages for recipe {self.recipe.name}")
 
         self._call_script_function("build", working_directory=self.build_directory, print_output=not quiet)
 
@@ -65,7 +71,7 @@ class PackageBuilder:
         self.recipe.write_to_file(self.package_directory / ".recipe_info")
 
     def check(self, quiet: bool = False):
-        logger.info(f"Checking build for recipe {self.recipe.name}")
+        logger.header(f"Checking build for recipe {self.recipe.name}")
         self._call_script_function("check", working_directory=self.build_directory, print_output=not quiet)
 
     def call_package(self, package_name: str, verbose: bool = False, extra_verbose: bool = False,
@@ -96,7 +102,7 @@ class PackageBuilder:
                           use_fakeroot=True)
 
     def package(self, package_name: str, delete_if_exists: bool = False):
-        logger.info(f"Packaging package {package_name} for recipe {self.recipe.name}")
+        logger.header(f"Packaging package {package_name} for recipe {self.recipe.name}")
 
         if package_name not in self.recipe.provides:
             raise PackageBuildError(f"Package {package_name} is not provided by the recipe {self.recipe.name}")
@@ -189,7 +195,8 @@ class PackageBuilder:
         env = {
             "source_directory": str(self.source_directory),
             "build_directory": str(self.build_directory),
-            "package_directory": str(self.package_directory)
+            "package_directory": str(self.package_directory),
+            "make_flags": os.environ.get("MAKEOPTS", ""),
         }
 
         return env

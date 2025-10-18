@@ -1,66 +1,105 @@
-import logging
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL, Logger, addLevelName, Formatter, setLoggerClass, getLogger, \
+    StreamHandler
 import sys
 from typing import Optional
 
 VERBOSE = 5
-logging.addLevelName(VERBOSE, "VERBOSE")
+addLevelName(VERBOSE, "VERBOSE")
 
-_COLORS = {
-    "VERBOSE": "\033[94m",  # bright blue
-    "DEBUG": "\033[96m",  # cyan
-    "INFO": "",  # default
-    "WARNING": "\033[93m",  # yellow
-    "ERROR": "\033[91m",  # red
-    "CRITICAL": "\033[95m",  # magenta
-    "RESET": "\033[0m",
-}
+HEADER = INFO - 1
+addLevelName(HEADER, "HEADER")
+
+STDOUT = HEADER - 1
+addLevelName(STDOUT, "STDOUT")
+
+STDERR = STDOUT - 1
+addLevelName(STDERR, "STDERR")
+
+_LIGHT_BLUE = "\033[94m"
+_CYAN = "\033[96m"
+_GREEN = "\033[92m"
+_YELLOW = "\033[93m"
+_RED = "\033[91m"
+_MAGENTA = "\033[95m"
+_RESET = "\033[0m"
 
 
-class AlpacaLogger(logging.Logger):
-    """Custom logger with 'verbose' level and IDE-friendly typing."""
-
+class AlpacaLogger(Logger):
     def verbose(self, msg: str, *args, **kwargs) -> None:
         if self.isEnabledFor(VERBOSE):
             self._log(VERBOSE, msg, args, **kwargs)
 
+    def header(self, msg: str, *args, **kwargs) -> None:
+        if self.isEnabledFor(HEADER):
+            self._log(HEADER, msg, args, **kwargs)
 
-class _ColoredFormatter(logging.Formatter):
+    def stdout(self, msg: str, *args, **kwargs) -> None:
+        if self.isEnabledFor(STDOUT):
+            self._log(STDOUT, msg, args, **kwargs)
+
+    def stderr(self, msg: str, *args, **kwargs) -> None:
+        if self.isEnabledFor(STDERR):
+            self._log(STDERR, msg, args, **kwargs)
+
+
+class _ColoredFormatter(Formatter):
     def format(self, record):
-        color = _COLORS.get(record.levelname, _COLORS["RESET"])
-        message = super().format(record)
-        return f"{color}{message}{_COLORS['RESET']}"
+        message = record.getMessage()
+        name = record.name.split('.')[-1]
+
+        if record.levelno == VERBOSE:
+            fmt = f"{_LIGHT_BLUE}[VERBOSE] {message}{_RESET}"
+        elif record.levelno == DEBUG:
+            fmt = f"{_CYAN}[DEBUG] {message}{_RESET}"
+        elif record.levelno == INFO:
+            fmt = f"-- {message}"
+        elif record.levelno == HEADER:
+            fmt = f"{_GREEN}==={_RESET} {message} {_GREEN}==={_RESET}"
+        elif record.levelno == STDOUT:
+            fmt = f"{_RESET}{message}"
+        elif record.levelno == STDERR:
+            fmt = f"{_YELLOW}{message}{_RESET}"
+        elif record.levelno == WARNING:
+            fmt = f"{_YELLOW}!! [WARNING] {message}{_RESET}"
+        elif record.levelno == ERROR:
+            fmt = f"{_RED}!! [ERROR] {message}{_RESET}"
+        elif record.levelno == CRITICAL:
+            fmt = f"{_MAGENTA}!! [FATAL] {message}{_RESET}"
+        else:
+            fmt = f"{message}"
+
+        return fmt
 
 
-def setup_logging(level: int = logging.INFO, stream=sys.stdout) -> AlpacaLogger:
+def setup_logging(level: int = INFO, stream=sys.stdout) -> AlpacaLogger:
     """
     Initialize colored logging for the entire application.
     Returns the 'alpaca' logger.
     """
-    logging.setLoggerClass(AlpacaLogger)
+    setLoggerClass(AlpacaLogger)
 
-    root = logging.getLogger()
+    root = getLogger()
     if not root.handlers:
-        handler = logging.StreamHandler(stream)
+        handler = StreamHandler(stream)
         handler.setFormatter(_ColoredFormatter("%(levelname)s: %(message)s"))
         root.addHandler(handler)
 
     root.setLevel(level)
 
-    return logging.getLogger("alpaca")  # type: ignore[return-value]
+    return getLogger("alpaca")  # type: ignore[return-value]
 
 
 def get_logger(name: Optional[str] = None) -> AlpacaLogger:
     """Get a namespaced logger under 'alpaca' with full type support."""
     full_name = "alpaca" if name is None else f"alpaca.{name}"
-    return logging.getLogger(full_name)  # type: ignore[return-value]
+    return getLogger(full_name)  # type: ignore[return-value]
 
 
 def _patch_logger_verbose():
-    def verbose(self, msg, *args, **kwargs):
-        if self.isEnabledFor(VERBOSE):
-            self._log(VERBOSE, msg, args, **kwargs)
-
-    logging.Logger.verbose = verbose
+    Logger.verbose = AlpacaLogger.verbose
+    Logger.header = AlpacaLogger.header
+    Logger.stdout = AlpacaLogger.stdout
+    Logger.stderr = AlpacaLogger.stderr
 
 
 _patch_logger_verbose()

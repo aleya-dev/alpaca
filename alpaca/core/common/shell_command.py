@@ -35,9 +35,9 @@ class ShellCommand:
         for line in iter(stream.readline, ""):
             if print_output:
                 if destination == StreamType.STDOUT:
-                    logger.info(line.replace('\n', ''))
+                    logger.stdout(line.replace('\n', ''))
                 elif destination == StreamType.STDERR:
-                    logger.error(line.replace('\n', ''))
+                    logger.stderr(line.replace('\n', ''))
 
             output_string.write(line)
 
@@ -68,7 +68,7 @@ class ShellCommand:
             env.update(environment)
 
         if use_fakeroot:
-            logger.info("Entering fakeroot...")
+            logger.header("Entering fakeroot...")
             full_args.append(_fakeroot_executable)
 
         full_args.append(_bash_executable)
@@ -99,7 +99,7 @@ class ShellCommand:
             raise Exception(f"Command failed with error code {error_code}.")
 
         if use_fakeroot:
-            logger.info("Leaving fakeroot...")
+            logger.header("Leaving fakeroot...")
 
         return ShellCommandResult(error_code, stdout_str.getvalue(), stderr_str.getvalue())
 

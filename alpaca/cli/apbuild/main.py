@@ -31,6 +31,8 @@ def _create_arg_parser() -> ArgumentParser:
 
     parser.add_argument("--skip-checks", action="store_true", default=None, help="Skip post-build checks")
 
+    parser.add_argument("--keep-source", action="store_true", default=None, help="Keep the source directory")
+
     parser.add_argument("--developer", action="store_true", default=None, help="Enable developer debug mode")
 
     parser.add_argument("recipe", type=str, help="Path to a recipe file to build")
@@ -64,8 +66,8 @@ def main():
 
         builder = PackageBuilder(recipe)
 
-        builder.ensure_directories(delete_if_exists=args.i_did_not_ask)
-        builder.handle_sources(skip_hash_check=args.skip_hash_check)
+        builder.ensure_directories(keep_source=args.keep_source, delete_if_exists=args.i_did_not_ask)
+        builder.handle_sources(keep_source=args.keep_source, skip_hash_check=args.skip_hash_check)
         builder.build(quiet=args.quiet)
 
         if not args.skip_checks:
