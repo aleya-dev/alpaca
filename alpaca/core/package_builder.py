@@ -1,5 +1,5 @@
-import os
 from importlib import resources
+from os import environ
 from os.path import basename, isfile, join
 from pathlib import Path
 from shutil import copy, rmtree
@@ -196,7 +196,7 @@ class PackageBuilder:
             "source_directory": str(self.source_directory),
             "build_directory": str(self.build_directory),
             "package_directory": str(self.package_directory),
-            "make_flags": os.environ.get("MAKEOPTS", ""),
+            "make_flags": environ.get("MAKEOPTS", ""),
         }
 
         return env
