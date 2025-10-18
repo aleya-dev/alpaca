@@ -54,6 +54,7 @@ def main():
 
         logger.debug(f"Loading recipe from {package_dir}")
         recipe = RecipeInfo.read_from_package_dir(package_dir)
+        logger.info(recipe)
 
         builder = PackageBuilder(recipe)
         builder.package(args.package, delete_if_exists=args.i_did_not_ask)

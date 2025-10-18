@@ -27,7 +27,9 @@ def _create_arg_parser() -> ArgumentParser:
 
     parser.add_argument("--skip-hash-check", action="store_true", default=None,
                         help="Skip SHA256 hash verification for downloaded sources. " \
-                        "WARNING: This is highly insecure and should only be used for testing purposes.")
+                             "WARNING: This is highly insecure and should only be used for testing purposes.")
+
+    parser.add_argument("--skip-checks", action="store_true", default=None, help="Skip post-build checks")
 
     parser.add_argument("--developer", action="store_true", default=None, help="Enable developer debug mode")
 
@@ -65,11 +67,14 @@ def main():
         builder.ensure_directories(delete_if_exists=args.i_did_not_ask)
         builder.handle_sources(skip_hash_check=args.skip_hash_check)
         builder.build(quiet=args.quiet)
-        builder.check(quiet=args.quiet)
+
+        if not args.skip_checks:
+            builder.check(quiet=args.quiet)
 
         for package in recipe.provides:
             logger.debug(f"({recipe.provides.index(package) + 1}/{len(recipe.provides)}) Building package: {package}")
-            builder.call_package(package, delete_if_exists=args.i_did_not_ask)
+            builder.call_package(package, verbose=args.verbose, extra_verbose=args.extra_verbose,
+                                 developer_mode=args.developer, delete_if_exists=args.i_did_not_ask)
 
     except Exception as e:
         if args.developer:

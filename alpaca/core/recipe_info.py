@@ -94,7 +94,7 @@ class RecipeInfo:
         data = json.loads(json_string)
 
         return RecipeInfo(
-            path=Path("#TAR#/.recipe"), # Find a better way for this...
+            path=Path("#TAR#/.recipe"),  # Find a better way for this...
             name=data.get("name"),
             stream=data.get("stream"),
             version=data.get("version"),
@@ -114,7 +114,7 @@ class RecipeInfo:
             data = json.load(f)
 
         return RecipeInfo(
-            path=path / ".recipe", # When loading from package dir, assume .recipe file
+            path=path.parent / ".recipe",  # When loading from package dir, assume .recipe file
             name=data.get("name"),
             stream=data.get("stream"),
             version=data.get("version"),

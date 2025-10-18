@@ -68,7 +68,8 @@ class PackageBuilder:
         logger.info(f"Checking build for recipe {self.recipe.name}")
         self._call_script_function("check", working_directory=self.build_directory, print_output=not quiet)
 
-    def call_package(self, package_name: str, delete_if_exists: bool = False):
+    def call_package(self, package_name: str, verbose: bool = False, extra_verbose: bool = False,
+                     delete_if_exists: bool = False, developer_mode: bool = False):
         logger.debug("Calling appack in a fakeroot environment")
         env = self._get_environment()
 
@@ -76,6 +77,17 @@ class PackageBuilder:
 
         if delete_if_exists:
             args += " -f"
+
+        if verbose:
+            args += " -v"
+
+        if extra_verbose:
+            args += " -vv"
+
+        if developer_mode:
+            args += " --developer"
+
+        logger.verbose(f"Calling '{args}'")
 
         ShellCommand.exec([args],
                           environment=env,
