@@ -52,8 +52,6 @@ def main():
 
         logger.debug(f"Loading package from {package_path}")
         with Package(package_path) as package:
-            print(package.recipe_info)
-
             registry = PackageRegistry(prefix=args.prefix)
             registry.install(package, ask_confirmation=not args.yes)
     except Exception as e:

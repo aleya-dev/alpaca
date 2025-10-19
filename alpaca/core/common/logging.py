@@ -21,8 +21,8 @@ _GREEN = "\033[92m"
 _YELLOW = "\033[93m"
 _RED = "\033[91m"
 _MAGENTA = "\033[95m"
+_BOLD = "\033[1m"
 _RESET = "\033[0m"
-
 
 class AlpacaLogger(Logger):
     def verbose(self, msg: str, *args, **kwargs) -> None:
@@ -45,7 +45,6 @@ class AlpacaLogger(Logger):
 class _ColoredFormatter(Formatter):
     def format(self, record):
         message = record.getMessage()
-        name = record.name.split('.')[-1]
 
         if record.levelno == VERBOSE:
             fmt = f"{_LIGHT_BLUE}[VERBOSE] {message}{_RESET}"
@@ -54,7 +53,7 @@ class _ColoredFormatter(Formatter):
         elif record.levelno == INFO:
             fmt = f"-- {message}"
         elif record.levelno == HEADER:
-            fmt = f"{_GREEN}==={_RESET} {message} {_GREEN}==={_RESET}"
+            fmt = f"{_BOLD}{_GREEN}==={_RESET} {message} {_GREEN}==={_RESET}"
         elif record.levelno == STDOUT:
             fmt = f"{_RESET}{message}"
         elif record.levelno == STDERR:
@@ -66,7 +65,7 @@ class _ColoredFormatter(Formatter):
         elif record.levelno == CRITICAL:
             fmt = f"{_MAGENTA}!! [FATAL] {message}{_RESET}"
         else:
-            fmt = f"{message}"
+            fmt = f"?? {message}"
 
         return fmt
 

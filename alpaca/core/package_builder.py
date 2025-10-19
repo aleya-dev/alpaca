@@ -111,7 +111,7 @@ class PackageBuilder:
 
         PackageBuilder._check_directory(package_directory, delete_if_exists=delete_if_exists)
 
-        self._call_script_function(f"package_{package_name}", working_directory=self.build_directory,
+        self._call_script_function(f"package_{package_name.replace("-", "_")}", working_directory=self.build_directory,
                                    environment={"package_directory": str(package_directory)})
 
         write_file_info(package_directory, package_directory / ".file_info")
@@ -196,6 +196,10 @@ class PackageBuilder:
             "source_directory": str(self.source_directory),
             "build_directory": str(self.build_directory),
             "package_directory": str(self.package_directory),
+            "c_flags": "",
+            "cxx_flags": "",
+            "ld_flags": "",
+            "rust_flags": "",
             "make_flags": environ.get("MAKEOPTS", ""),
         }
 

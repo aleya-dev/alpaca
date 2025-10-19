@@ -92,24 +92,26 @@ class PackageRegistry:
         return RecipeInfo.read_from_recipe_info(recipe_info_file)
 
     def install(self, package: Package, ask_confirmation: bool = True):
-        target_dir = self.registry_path / package.recipe_info.name
+        recipe_info = package.read_recipe_info()
+
+        target_dir = self.registry_path / recipe_info.name
         target_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Installing package {package.recipe_info.name} to {target_dir}...")
+        logger.info(f"Installing package {recipe_info.name} to {target_dir}...")
 
-        if not self.check_dependencies_satisfied(package.recipe_info):
-            logger.error(f"Cannot install package {package.recipe_info.name} due to unsatisfied dependencies.")
+        if not self.check_dependencies_satisfied(recipe_info):
+            logger.error(f"Cannot install package {recipe_info.name} due to unsatisfied dependencies.")
             return
 
-        state = self.get_installed_recipe_info_by_package_name(package.recipe_info.name)
+        state = self.get_installed_recipe_info_by_package_name(recipe_info.name)
         updating = True if state else False
 
-        if state and state.version == package.recipe_info.version:
-            logger.info(f"- Overwriting {package.recipe_info.name} ({package.recipe_info.version})")
+        if state and state.version == recipe_info.version:
+            logger.info(f"- Overwriting {recipe_info.name} ({recipe_info.version})")
         elif updating:
-            logger.info(f"- Updating {package.recipe_info.name} ({state.version} => {package.recipe_info.version})")
+            logger.info(f"- Updating {recipe_info.name} ({state.version} => {recipe_info.version})")
         else:
-            logger.info(f"- Installing {package.recipe_info.name} ({package.recipe_info.version})")
+            logger.info(f"- Installing {recipe_info.name} ({recipe_info.version})")
 
         file_info = package.read_file_info()
         logger.info(f"Total install size: {_bytes_to_human(get_total_bytes(file_info))}")
@@ -123,7 +125,7 @@ class PackageRegistry:
             package_file_tempdir = Path(tempdir)
             package.extract(package_file_tempdir)
 
-            database_path = self.registry_path / package.recipe_info.name
+            database_path = self.registry_path / recipe_info.name
 
             if not database_path.exists():
                 logger.verbose(f"Creating database directory: {database_path}")
@@ -177,7 +179,7 @@ class PackageRegistry:
             logger.verbose(f"Removing temporary directory: {package_file_tempdir}")
             rmtree(package_file_tempdir, ignore_errors=True)
 
-            logger.info(f"Package {package.recipe_info.name} ({package.recipe_info.version}) installed successfully.")
+            logger.info(f"Package {recipe_info.name} ({recipe_info.version}) installed successfully.")
 
     def uninstall(self, name: str, ask_confirmation: bool = True):
         state = self.get_installed_recipe_info_by_package_name(name)

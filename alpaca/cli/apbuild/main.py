@@ -5,9 +5,10 @@ from pathlib import Path
 
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_builder import PackageBuilder
-from alpaca.core.recipe_info import RecipeInfo
 
 __version__ = importlib.metadata.version("aleya-alpaca")
+
+from alpaca.core.recipe_info import RecipeInfo
 
 
 def _create_arg_parser() -> ArgumentParser:
