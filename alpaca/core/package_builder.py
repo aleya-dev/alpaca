@@ -7,6 +7,7 @@ from tarfile import is_tarfile
 from urllib.parse import urlparse
 
 from alpaca.core.common.alpaca_error import AlpacaError
+from alpaca.core.common.configuration import Configuration
 from alpaca.core.common.file_downloader import download_file
 from alpaca.core.common.hash import check_file_hash_from_string
 from alpaca.core.common.package_file_info import write_file_info
@@ -23,8 +24,9 @@ class PackageBuildError(AlpacaError):
 
 
 class PackageBuilder:
-    def __init__(self, recipe: RecipeInfo):
+    def __init__(self, recipe: RecipeInfo, config: Configuration):
         self.recipe = recipe
+        self._config = config
 
     @property
     def source_directory(self) -> Path:
@@ -192,15 +194,12 @@ class PackageBuilder:
                           use_fakeroot=use_fakeroot)
 
     def _get_environment(self) -> dict[str, str]:
-        env = {
+        env = self._config.get_environment_variables()
+
+        env.update({
             "source_directory": str(self.source_directory),
             "build_directory": str(self.build_directory),
-            "package_directory": str(self.package_directory),
-            "c_flags": "",
-            "cxx_flags": "",
-            "ld_flags": "",
-            "rust_flags": "",
-            "make_flags": environ.get("MAKEOPTS", ""),
-        }
+            "package_directory": str(self.package_directory)
+        })
 
         return env

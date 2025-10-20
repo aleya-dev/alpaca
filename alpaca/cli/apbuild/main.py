@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from logging import DEBUG, INFO
 from pathlib import Path
 
+from alpaca.core.common.configuration import Configuration
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_builder import PackageBuilder
 
@@ -60,12 +61,14 @@ def main():
             logger.warning("Skipping hash verification for sources. "
                            "This is highly insecure and should only be used for testing purposes.")
 
+        config = Configuration.create_application_config(args)
+
         recipe_path = Path(args.recipe).resolve()
 
         logger.debug(f"Loading recipe from {recipe_path}")
         recipe = RecipeInfo.parse_from_recipe(recipe_path)
 
-        builder = PackageBuilder(recipe)
+        builder = PackageBuilder(recipe, config)
 
         builder.ensure_directories(keep_source=args.keep_source, delete_if_exists=args.i_did_not_ask)
         builder.handle_sources(keep_source=args.keep_source, skip_hash_check=args.skip_hash_check)

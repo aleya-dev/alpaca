@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 from logging import INFO, DEBUG
 from pathlib import Path
 
+from alpaca.core.common.configuration import Configuration
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_builder import PackageBuilder
 from alpaca.core.recipe_info import RecipeInfo
@@ -50,13 +51,15 @@ def main():
             setup_logging(level=DEBUG)
             logger.verbose("Verbose logging enabled")
 
+        config = Configuration.create_application_config(args)
+
         package_dir = Path(args.package_dir).resolve()
 
         logger.debug(f"Loading recipe from {package_dir}")
         recipe = RecipeInfo.read_from_package_dir(package_dir)
         logger.info(recipe)
 
-        builder = PackageBuilder(recipe)
+        builder = PackageBuilder(recipe, config)
         builder.package(args.package, delete_if_exists=args.i_did_not_ask)
 
     except Exception as e:
