@@ -187,17 +187,27 @@ class Configuration:
         env = {
             "alpaca_build": "1",
             "alpaca_version": __version__,
-            "c_flags": self.c_flags,
-            "ALPACA_C_FLAGS": self.c_flags,
-            "cpp_flags": self.cpp_flags,
-            "ALPACA_CXX_FLAGS": self.cpp_flags,
-            "ld_flags": self.ld_flags,
-            "ALPACA_LD_FLAGS": self.ld_flags,
-            "make_flags": self.make_flags,
-            "ALPACA_MAKE_FLAGS": self.make_flags,
-            "ninja_flags": self.ninja_flags,
-            "ALPACA_NINJA_FLAGS": self.ninja_flags
         }
+
+        if self.c_flags:
+            env["c_flags"] = self.c_flags
+            env["ALPACA_C_FLAGS"] = self.c_flags
+
+        if self.cpp_flags:
+            env["cpp_flags"] = self.cpp_flags
+            env["ALPACA_CXX_FLAGS"] = self.cpp_flags
+
+        if self.ld_flags:
+            env["ld_flags"] = self.ld_flags
+            env["ALPACA_LD_FLAGS"] = self.ld_flags
+
+        if self.make_flags:
+            env["make_flags"] = self.make_flags
+            env["ALPACA_MAKE_FLAGS"] = self.make_flags
+
+        if self.ninja_flags:
+            env["ninja_flags"] = self.ninja_flags
+            env["ALPACA_NINJA_FLAGS"] = self.ninja_flags
 
         config_env = environ.get(_alpaca_config_env_var, None)
 

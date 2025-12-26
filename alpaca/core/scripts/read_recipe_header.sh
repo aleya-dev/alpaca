@@ -32,8 +32,4 @@ else
     emit version "${version:-}"
 fi
 
-if declare -f build >/dev/null; then
-    emit build "$(build)"
-else
-    emit build "${build:-}"
-fi
+emit build "${build:-}"
