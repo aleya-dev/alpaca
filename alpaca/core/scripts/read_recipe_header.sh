@@ -1,30 +1,39 @@
-set -e
-source $1
+#!/usr/bin/env bash
 
-for var in \
-  name \
-  stream \
-  version \
-  build \
-  url \
-  licenses \
-  dependencies \
-  build_dependencies \
-  provides \
-  sources \
-  sha256sums; do
-    if declare -p "$var" 2>/dev/null | grep -q 'declare -a'; then
-        eval "declare -n array_ref=$var"
-        printf '%s=(' "$var"
-        for i in "${!array_ref[@]}"; do
-            element="${array_ref[$i]%,}"
-            printf "'%s'" "$element"
-            if [ $i -lt $((${#array_ref[@]} - 1)) ]; then
-                printf ", "
-            fi
-        done
-        printf ')\n'
-    else
-        eval "printf '%s=%q\n' \"$var\" \"\${$var}\""
-    fi
-done
+set -euo pipefail
+
+source "$1"
+
+emit() {
+    # key value
+    printf '%s\0' "$1=$2"
+}
+
+emit_array() {
+    local key=$1
+    shift
+    for val in "$@"; do
+        printf '%s\0' "$key[]=$val"
+    done
+}
+
+emit name "${name:-}"
+emit url "${url:-}"
+emit_array licenses "${licenses[@]:-}"
+emit_array dependencies "${dependencies[@]:-}"
+emit_array build_dependencies "${build_dependencies[@]:-}"
+emit_array provides "${provides[@]:-}"
+emit_array sources "${sources[@]:-}"
+emit_array sha256sums "${sha256sums[@]:-}"
+
+if declare -f version >/dev/null; then
+    emit version "$(version)"
+else
+    emit version "${version:-}"
+fi
+
+if declare -f build >/dev/null; then
+    emit build "$(build)"
+else
+    emit build "${build:-}"
+fi
