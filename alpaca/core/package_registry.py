@@ -6,7 +6,7 @@ from shutil import rmtree, copy2
 
 from alpaca.core.common.confirmation import ask_user_confirmation
 from alpaca.core.common.logging import get_logger
-from alpaca.core.common.package_file_info import get_total_bytes, read_file_info_from_string
+from alpaca.core.package_file_info import get_total_bytes, read_file_info_from_string
 from alpaca.core.package import Package
 from alpaca.core.recipe_info import RecipeInfo
 

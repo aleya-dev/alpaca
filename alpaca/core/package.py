@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Self
 
 from alpaca.core.common.logging import get_logger
-from alpaca.core.common.package_file_info import FileInfo, read_file_info_from_string
+from alpaca.core.package_file_info import FileInfo, read_file_info_from_string
 from alpaca.core.recipe_info import RecipeInfo
 
 logger = get_logger(__name__)

@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from logging import INFO, DEBUG
 from pathlib import Path
 
-from alpaca.core.common.configuration import Configuration
+from alpaca.core.configuration import Configuration
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_builder import PackageBuilder
 from alpaca.core.recipe_info import RecipeInfo

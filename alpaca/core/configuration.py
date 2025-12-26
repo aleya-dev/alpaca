@@ -6,8 +6,8 @@ from os import environ
 from os.path import exists, abspath, expandvars, expanduser
 from typing import Self
 
-from alpaca.core.common.repository_ref import RepositoryRef
 from alpaca.core.common.logging import get_logger
+from alpaca.core.repository_ref import RepositoryRef
 
 _system_config_path = "/etc/alpaca.conf"
 _user_config_path = abspath(expandvars(expanduser("~/.alpaca")))
@@ -99,8 +99,11 @@ class Configuration:
         self.make_flags: str | None = kwargs.get('make_flags', None)
         self.ninja_flags: str | None = kwargs.get('ninja_flags', None)
 
-        self.repositories: list[RepositoryRef] | None = kwargs.get('repositories', None)
+        self.package_repositories: list[RepositoryRef] | None = kwargs.get('package_repositories', None)
         self.package_streams: list[str] | None = kwargs.get('package_streams', None)
+
+        self.recipe_repositories: list[RepositoryRef] | None = kwargs.get('recipe_repositories', None)
+        self.recipe_streams: list[str] | None = kwargs.get('recipe_streams', None)
 
     @classmethod
     def create_application_config(cls, application_arguments: Namespace) -> Self:
@@ -227,10 +230,15 @@ class Configuration:
         config = ConfigParser()
         config.read(path, encoding="utf-8")
 
-        streams = config.get("repository", "package_streams", fallback="").split(",")
+        package_streams = config.get("packages", "streams", fallback="").split(",")
 
-        if not streams or streams == [""]:
-            streams = None
+        if not package_streams or package_streams == [""]:
+            package_streams = None
+
+        recipe_streams = config.get("recipes", "streams", fallback="").split(",")
+
+        if not recipe_streams or recipe_streams == [""]:
+            recipe_streams = None
 
         return Configuration(
             config_type=config_type,
@@ -239,8 +247,10 @@ class Configuration:
             ld_flags=config.get("build", "ld_flags", fallback=None),
             make_flags=config.get("build", "make_flags", fallback=None),
             ninja_flags=config.get("build", "ninja_flags", fallback=None),
-            repositories=RepositoryRef.from_string(config.get("repository", "repositories", fallback="")),
-            package_streams=streams
+            package_repositories=RepositoryRef.from_string(config.get("packages", "repositories", fallback="")),
+            package_streams=package_streams,
+            recipe_repositories=RepositoryRef.from_string(config.get("recipes", "repositories", fallback="")),
+            recipe_streams=recipe_streams,
         )
 
     @classmethod

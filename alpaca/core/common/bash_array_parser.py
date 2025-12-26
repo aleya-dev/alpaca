@@ -1,7 +1,7 @@
 import shlex
 from typing import List
 
-from alpaca.core.common.alpaca_error import AlpacaError
+from alpaca.core.alpaca_error import AlpacaError
 
 
 class BashArrayParseError(AlpacaError):

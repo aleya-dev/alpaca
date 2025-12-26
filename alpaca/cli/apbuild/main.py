@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 from logging import DEBUG, INFO
 from pathlib import Path
 
-from alpaca.core.common.configuration import Configuration
+from alpaca.core.configuration import Configuration
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_builder import PackageBuilder
 
@@ -38,6 +38,7 @@ def _create_arg_parser() -> ArgumentParser:
     parser.add_argument("--developer", action="store_true", default=None, help="Enable developer debug mode")
 
     parser.add_argument("recipe", type=str, help="Path to a recipe file to build")
+    parser
 
     return parser
 

@@ -4,11 +4,10 @@ from logging import DEBUG, INFO
 from pathlib import Path
 
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
+from alpaca.core.package_registry import PackageRegistry
 from alpaca.core.package import Package
 
 __version__ = importlib.metadata.version("aleya-alpaca")
-
-from alpaca.core.package_registry import PackageRegistry
 
 
 def _create_arg_parser() -> ArgumentParser:
