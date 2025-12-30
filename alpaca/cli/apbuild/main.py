@@ -6,10 +6,10 @@ from pathlib import Path
 from alpaca.core.configuration import Configuration
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_builder import PackageBuilder
+from alpaca.core.package_registry import PackageRegistry
+from alpaca.core.recipe_info import RecipeInfo
 
 __version__ = importlib.metadata.version("aleya-alpaca")
-
-from alpaca.core.recipe_info import RecipeInfo
 
 
 def _create_arg_parser() -> ArgumentParser:
@@ -68,6 +68,11 @@ def main():
 
         logger.debug(f"Loading recipe from {recipe_path}")
         recipe = RecipeInfo.parse_from_recipe(recipe_path)
+
+        registry = PackageRegistry()
+        if not registry.check_dependencies_satisfied(recipe):
+            logger.error(f"Cannot build recipe {recipe.name} due to unsatisfied dependencies.")
+            exit(1)
 
         builder = PackageBuilder(recipe, config)
 

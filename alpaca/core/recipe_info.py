@@ -21,10 +21,8 @@ def _read_recipe_header(file_path: Path) -> dict[str, Union[str, List[str]]]:
 
     info = {}
     current_key = None
-    current_array = []
 
     for line in result.stdout.split("\0"):
-
         if "=" in line:
             key, value = _parse_line(line)
 
@@ -32,24 +30,16 @@ def _read_recipe_header(file_path: Path) -> dict[str, Union[str, List[str]]]:
                 key = key[:-2]
 
                 if current_key != key:
-                    if current_key is not None:
-                        info[current_key] = current_array
+                    if value != "":
+                        info[key] = [value]
+                    else:
+                        info[key] = []
 
                     current_key = key
-                    current_array = [value]
-
                 else:
-                    current_array.append(value)
+                    info[key].append(value)
             else:
-                if current_key is not None:
-                    info[current_key] = current_array
-                    current_key = None
-                    current_array = []
-
                 info[key] = value
-
-    if current_key is not None:
-        info[current_key] = current_array
 
     return info
 

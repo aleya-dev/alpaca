@@ -72,11 +72,14 @@ class PackageRegistry:
         installed_packages = self.get_installed_packages()
         installed_package_names = {pkg.name for pkg in installed_packages}
 
+        result = True
+
         for dependency in info.dependencies:
             if dependency not in installed_package_names:
                 logger.error(f"Dependency {dependency} for package {info.name} is not satisfied.")
+                result = False
 
-        return True
+        return result
 
     def get_installed_recipe_info_by_package_name(self, package_name: str) -> RecipeInfo | None:
         package_dir = self.registry_path / package_name
