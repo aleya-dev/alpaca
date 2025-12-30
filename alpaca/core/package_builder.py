@@ -76,33 +76,6 @@ class PackageBuilder:
         logger.header(f"Checking build for recipe {self.recipe.name}")
         self._call_script_function("check", working_directory=self.build_directory, print_output=not quiet)
 
-    def call_package(self, package_name: str, verbose: bool = False, extra_verbose: bool = False,
-                     delete_if_exists: bool = False, developer_mode: bool = False):
-        logger.debug("Calling appack in a fakeroot environment")
-        env = self._get_environment()
-
-        args = f"appack {self.package_directory} {package_name}"
-
-        if delete_if_exists:
-            args += " -f"
-
-        if verbose:
-            args += " -v"
-
-        if extra_verbose:
-            args += " -vv"
-
-        if developer_mode:
-            args += " --developer"
-
-        logger.verbose(f"Calling '{args}'")
-
-        ShellCommand.exec([args],
-                          environment=env,
-                          print_output=True, throw_on_error=True,
-                          working_directory=Path.cwd(),
-                          use_fakeroot=True)
-
     def package(self, package_name: str, delete_if_exists: bool = False):
         logger.header(f"Packaging package {package_name} for recipe {self.recipe.name}")
 
@@ -113,8 +86,9 @@ class PackageBuilder:
 
         PackageBuilder._check_directory(package_directory, delete_if_exists=delete_if_exists)
 
-        self._call_script_function(f"package_{package_name.replace("-", "_")}", working_directory=self.build_directory,
-                                   environment={"package_directory": str(package_directory)})
+        self._call_script_function(f"package_{package_name.replace("-", "_")}", use_fakeroot=True,
+                                   working_directory=self.build_directory,
+                                   additional_variables={"package_directory": str(package_directory)})
 
         write_file_info(package_directory, package_directory / ".file_info")
         copy(self.package_directory / '.recipe', package_directory / '.recipe')
@@ -178,28 +152,38 @@ class PackageBuilder:
                               use_fakeroot=False,
                               print_output: bool = True,
                               working_directory: Path | None = None,
-                              environment: dict[str, str] | None = None):
+                              additional_variables: dict[str, str] | None = None):
         logger.verbose(f"Calling script function {function_name} from recipe {self.recipe.path}")
 
-        env = self._get_environment()
+        variables = self._get_variables()
 
-        if environment is not None:
-            env.update(environment)
+        if additional_variables is not None:
+            variables.update(additional_variables)
 
         template_text = resources.read_text("alpaca.core.scripts", "call_recipe_function.sh")
+        template_text.replace("@ALPACA_VARIABLES@", self._generate_variables_string(variables))
+
         ShellCommand.exec([template_text, "_", self.recipe.path, function_name],
-                          environment=env,
                           print_output=print_output, throw_on_error=True,
                           working_directory=working_directory,
                           use_fakeroot=use_fakeroot)
 
-    def _get_environment(self) -> dict[str, str]:
-        env = self._config.get_environment_variables()
+    def _get_variables(self) -> dict[str, str]:
+        variables = self._config.get_variables()
+        variables.update(self.recipe.get_variables())
 
-        env.update({
+        variables.update({
             "source_directory": str(self.source_directory),
-            "build_directory": str(self.build_directory),
-            "package_directory": str(self.package_directory)
+            "build_directory": str(self.build_directory)
         })
 
-        return env
+        return variables
+
+    @staticmethod
+    def _generate_variables_string(variables: dict[str, str]) -> str:
+        variables_string = ""
+
+        for key, value in variables.items():
+            variables_string += f'{key}="{value}"\n'
+
+        return variables_string

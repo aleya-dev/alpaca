@@ -25,9 +25,17 @@ def extract_tar(file_path: Path, destination_dir: Path):
     logger.verbose(f"File {file_path} extracted to {destination_dir}")
 
 
+def _reset_uid_gid(tarinfo):
+    tarinfo.uid = 0
+    tarinfo.gid = 0
+    tarinfo.uname = ""
+    tarinfo.gname = ""
+    return tarinfo
+
+
 def compress_tar(directory: Path | str, archive_path: Path | str):
     """
-    Compress a directory to a tar.zst archive
+    Compress a directory to a tar.zst archive as uid/gid 0.
 
     Args:
         directory (Path): The source directory to archive
@@ -49,6 +57,6 @@ def compress_tar(directory: Path | str, archive_path: Path | str):
 
     with tarfile.open(archive_path, "w:xz") as tar:
         for file in files:
-            tar.add(file, arcname=relpath(file, directory))
+            tar.add(file, arcname=relpath(file, directory), filter=_reset_uid_gid)
 
     logger.verbose(f"Directory {directory} archived to {archive_path}")

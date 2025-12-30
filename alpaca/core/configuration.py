@@ -169,52 +169,42 @@ class Configuration:
 
         return config
 
-    def get_environment_variables(self) -> dict[str, str]:
+    def get_variables(self) -> dict[str, str]:
         """
-        Get the configuration environment variables for the Alpaca build process.
-        This function returns a dictionary containing the necessary environment variables for the build process,
+        Get the configuration variables for the Alpaca build process.
+        This function returns a dictionary containing the necessary variables for the build process,
         including the Alpaca version, artifact path, and various flags for compilation and linking.
-        The environment variables are used to configure the build process and ensure that the correct paths and flags
+        The variables are used to configure the build process and ensure that the correct paths and flags
         are set for the build tools.
 
         These variables must be expanded with the addition of those of the current context (for example the build
         context while building a package).
 
         Returns:
-            dict[str, str]: A dictionary containing the environment variables for the build process.
+            dict[str, str]: A dictionary containing the variables for the build process.
         """
 
-        env = {
+        variables = {
             "alpaca_build": "1",
             "alpaca_version": __version__,
         }
 
         if self.c_flags:
-            env["c_flags"] = self.c_flags
-            env["ALPACA_C_FLAGS"] = self.c_flags
+            variables["alpaca_c_flags"] = self.c_flags
 
         if self.cpp_flags:
-            env["cpp_flags"] = self.cpp_flags
-            env["ALPACA_CXX_FLAGS"] = self.cpp_flags
+            variables["alpaca_cxx_flags"] = self.cpp_flags
 
         if self.ld_flags:
-            env["ld_flags"] = self.ld_flags
-            env["ALPACA_LD_FLAGS"] = self.ld_flags
+            variables["alpaca_ld_flags"] = self.ld_flags
 
         if self.make_flags:
-            env["make_flags"] = self.make_flags
-            env["ALPACA_MAKE_FLAGS"] = self.make_flags
+            variables["alpaca_make_flags"] = self.make_flags
 
         if self.ninja_flags:
-            env["ninja_flags"] = self.ninja_flags
-            env["ALPACA_NINJA_FLAGS"] = self.ninja_flags
+            variables["alpaca_ninja_flags"] = self.ninja_flags
 
-        config_env = environ.get(_alpaca_config_env_var, None)
-
-        if config_env is not None:
-            env[_alpaca_config_env_var] = config_env
-
-        return env
+        return variables
 
     @classmethod
     def _create_from_config_file(cls, config_type: ConfigurationType, path: str) -> Self | None:

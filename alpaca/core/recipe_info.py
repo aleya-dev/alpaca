@@ -201,3 +201,12 @@ class RecipeInfo:
             "sha256sums": self.sha256sums,
             "url": self.url
         }
+
+    def get_variables(self) -> dict[str, str]:
+        return {
+            "name": str(self.name),
+            "stream": str(self.stream),
+            "version": str(self.version),
+            "build": str(self.build),
+            "url": str(self.url)
+        }

@@ -80,8 +80,7 @@ def main():
 
         for package in recipe.provides:
             logger.debug(f"({recipe.provides.index(package) + 1}/{len(recipe.provides)}) Building package: {package}")
-            builder.call_package(package, verbose=args.verbose, extra_verbose=args.extra_verbose,
-                                 developer_mode=args.developer, delete_if_exists=args.i_did_not_ask)
+            builder.package(package, delete_if_exists=args.i_did_not_ask)
 
     except Exception as e:
         if args.developer:
