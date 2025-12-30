@@ -7,16 +7,14 @@ import json
 
 from alpaca.core.common.shell_command import ShellCommand
 
-ARRAY_KEYS = {"licenses", "dependencies", "build_dependencies", "provides", "sources", "sha256sums", }
 
-
-def parse_line(line: str) -> tuple[str, str]:
+def _parse_line(line: str) -> tuple[str, str]:
     """Parse a key=value line, stripping quotes and whitespace."""
     key, value = line.split("=", 1)
     return key.strip(), value.strip().strip('"').strip("'")
 
 
-def read_recipe_header(file_path: Path) -> dict[str, Union[str, List[str]]]:
+def _read_recipe_header(file_path: Path) -> dict[str, Union[str, List[str]]]:
     """Execute the Bash script to read recipe header and return info as a dict."""
     template_text = resources.read_text("alpaca.core.scripts", "read_recipe_header.sh")
     result = ShellCommand.exec([template_text, "_", file_path], print_output=False, throw_on_error=True)
@@ -28,7 +26,7 @@ def read_recipe_header(file_path: Path) -> dict[str, Union[str, List[str]]]:
     for line in result.stdout.split("\0"):
 
         if "=" in line:
-            key, value = parse_line(line)
+            key, value = _parse_line(line)
 
             if key.endswith("[]"):
                 key = key[:-2]
@@ -96,7 +94,7 @@ class RecipeInfo:
     @staticmethod
     def parse_from_recipe(file_path: Path) -> "RecipeInfo":
         """Load recipe information from a file using the Bash script."""
-        info = read_recipe_header(file_path)
+        info = _read_recipe_header(file_path)
 
         return RecipeInfo(
             path=file_path,
