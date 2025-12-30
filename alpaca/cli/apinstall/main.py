@@ -1,8 +1,10 @@
 import importlib.metadata
 from argparse import ArgumentParser
 from logging import DEBUG, INFO
+from os import getuid
 from pathlib import Path
 
+from alpaca.core.common.host_info import is_aleya_linux_host
 from alpaca.core.common.logging import setup_logging, VERBOSE, get_logger
 from alpaca.core.package_registry import PackageRegistry
 from alpaca.core.package import Package
@@ -46,6 +48,15 @@ def main():
         elif args.verbose:
             setup_logging(level=DEBUG)
             logger.verbose("Verbose logging enabled")
+
+        if getuid() != 0:
+            logger.critical("Package installation requires root privileges. Please run as root.")
+            exit(1)
+
+        if args.prefix == "/":
+            if not is_aleya_linux_host():
+                logger.critical("Default prefix '/' is only allowed on Aleya Linux.")
+                exit(1)
 
         package_path = Path(args.package).resolve()
 

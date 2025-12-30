@@ -67,4 +67,4 @@ class Package:
         """
         Extract all files from the package to the destination directory.
         """
-        self._tar.extractall(path=destination)
+        self._tar.extractall(path=destination, numeric_owner=True)
