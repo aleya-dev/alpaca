@@ -21,46 +21,39 @@ def read_recipe_header(file_path: Path) -> dict[str, Union[str, List[str]]]:
     template_text = resources.read_text("alpaca.core.scripts", "read_recipe_header.sh")
     result = ShellCommand.exec([template_text, "_", file_path], print_output=False, throw_on_error=True)
 
-    # Parse the result.stdout. Each line is in the form key=value\0. Arrays are in the format key[]=value\0 on multiple lines.
     info = {}
     current_key = None
     current_array = []
+
     for line in result.stdout.split("\0"):
+
         if "=" in line:
             key, value = parse_line(line)
+
             if key.endswith("[]"):
-                # This is an array element
                 key = key[:-2]
+
                 if current_key != key:
-                    # Store the previous array if it exists
                     if current_key is not None:
                         info[current_key] = current_array
-                    # Start a new array
+
                     current_key = key
                     current_array = [value]
+
                 else:
                     current_array.append(value)
             else:
-                # This is a single value
                 if current_key is not None:
-                    # Store the previous array if it exists
                     info[current_key] = current_array
                     current_key = None
                     current_array = []
+
                 info[key] = value
-    # Store any remaining array
+
     if current_key is not None:
         info[current_key] = current_array
 
     return info
-
-    #info = {}
-    #for line in result.stdout.splitlines():
-    #    if "=" in line:
-    #        key, value = parse_line(line)
-    #        info[key] = parse_bash_array(value) if key in ARRAY_KEYS else value
-
-    #return info
 
 
 @dataclass

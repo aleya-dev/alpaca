@@ -6,13 +6,13 @@ from typing import Optional
 VERBOSE = 5
 addLevelName(VERBOSE, "VERBOSE")
 
-HEADER = INFO - 1
+HEADER = INFO + 1
 addLevelName(HEADER, "HEADER")
 
-STDOUT = HEADER - 1
+STDOUT = INFO - 1
 addLevelName(STDOUT, "STDOUT")
 
-STDERR = STDOUT - 1
+STDERR = WARNING + 1
 addLevelName(STDERR, "STDERR")
 
 _LIGHT_BLUE = "\033[94m"

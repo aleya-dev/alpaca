@@ -94,7 +94,7 @@ class PackageBuilder:
         copy(self.package_directory / '.recipe', package_directory / '.recipe')
         copy(self.package_directory / '.recipe_info', package_directory / '.recipe_info')
 
-        compress_tar(package_directory, Path.cwd() / f"{package_name}-{self.recipe.version}-{self.recipe.build}.tar.xz")
+        compress_tar(package_directory, Path.cwd() / f"{package_name}-{self.recipe.version}-{self.recipe.build}.package.tar.xz")
 
     @staticmethod
     def _check_directory(path: Path, delete_if_exists: bool):
@@ -161,7 +161,7 @@ class PackageBuilder:
             variables.update(additional_variables)
 
         template_text = resources.read_text("alpaca.core.scripts", "call_recipe_function.sh")
-        template_text.replace("@ALPACA_VARIABLES@", self._generate_variables_string(variables))
+        template_text = template_text.replace("@ALPACA_VARIABLES@", self._generate_variables_string(variables))
 
         ShellCommand.exec([template_text, "_", self.recipe.path, function_name],
                           print_output=print_output, throw_on_error=True,

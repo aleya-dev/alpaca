@@ -40,7 +40,6 @@ alpaca = ["core/scripts/*.sh"]
 
 [project.scripts]
 apbuild = "alpaca.cli.apbuild.main:main"
-appack = "alpaca.cli.appack.main:main"
 apinstall = "alpaca.cli.apinstall.main:main"
 apuninstall = "alpaca.cli.apuninstall.main:main"
 

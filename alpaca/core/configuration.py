@@ -184,25 +184,13 @@ class Configuration:
             dict[str, str]: A dictionary containing the variables for the build process.
         """
 
-        variables = {
-            "alpaca_build": "1",
-            "alpaca_version": __version__,
-        }
-
-        if self.c_flags:
-            variables["alpaca_c_flags"] = self.c_flags
-
-        if self.cpp_flags:
-            variables["alpaca_cxx_flags"] = self.cpp_flags
-
-        if self.ld_flags:
-            variables["alpaca_ld_flags"] = self.ld_flags
-
-        if self.make_flags:
-            variables["alpaca_make_flags"] = self.make_flags
-
-        if self.ninja_flags:
-            variables["alpaca_ninja_flags"] = self.ninja_flags
+        variables = {"alpaca_version": __version__,
+                     "alpaca_script_version": "1",
+                     "c_flags": self.c_flags if self.c_flags else "",
+                     "cxx_flags": self.cpp_flags if self.cpp_flags else "",
+                     "ld_flags": self.ld_flags if self.ld_flags else "",
+                     "make_flags": self.make_flags if self.make_flags else "",
+                     "ninja_flags": self.ninja_flags if self.ninja_flags else ""}
 
         return variables
 
